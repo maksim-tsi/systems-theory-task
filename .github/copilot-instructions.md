@@ -19,7 +19,7 @@
 - Environment is conda env “tsi” (Python 3.11). Activate before running anything.
 - Run tests with: pytest tests/
 - Run pipeline with: python main.py
-- CI uses environment.yml; do not depend on absolute local paths.
+- CI uses setup-python with pip installs (no conda); do not depend on absolute local paths.
 
 ## Repo conventions / policies
 - Large file policy: do not commit artifacts >100MB; data outputs go under data/ (git-ignored). Enforced by scripts/check_large_files.py.

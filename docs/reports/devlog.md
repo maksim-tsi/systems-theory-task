@@ -83,3 +83,9 @@ Task: Standardized analysis artifact storage.
 Decisions made:
 - Moved golden sample stats to docs/reports/artifacts/2026-02-01/ and updated report links.
 - Added artifact storage guidance to AGENTS.md, .github/copilot-instructions.md, and README files.
+
+Task: Removed conda from CI.
+
+Decisions made:
+- Replaced conda-based CI workflow with actions/setup-python and pip installs.
+- Updated AGENTS.md and copilot instructions to reflect non-conda CI.

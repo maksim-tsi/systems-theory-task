@@ -174,3 +174,18 @@ Task: Documented Task 3 chaos report.
 
 Decisions made:
 - Added extended Task 3 markdown report with methods, results, interpretation, and artifact links in docs/reports/task3-chaos-report.md.
+
+Task: Reformatted final assignment report and generated PDF (Ilin).
+
+Decisions made:
+- Reformatted the main report to align with the assignment structure (Tasks 1–3) and moved key LaTeX equations into the main body: [docs/Theory of Systems - Ilin.md](docs/Theory%20of%20Systems%20-%20Ilin.md).
+- Exported static figures for PDF inclusion:
+	- Structural diagram: [docs/reports/figures/ilin_structural_diagram.pdf](docs/reports/figures/ilin_structural_diagram.pdf), [docs/reports/figures/ilin_structural_diagram.png](docs/reports/figures/ilin_structural_diagram.png).
+	- Task 3 figures: [docs/reports/figures/task3_time_series.png](docs/reports/figures/task3_time_series.png), [docs/reports/figures/task3_phase_portrait.png](docs/reports/figures/task3_phase_portrait.png), [docs/reports/figures/task3_hurst_rs.png](docs/reports/figures/task3_hurst_rs.png), [docs/reports/figures/task3_correlation_dimension.png](docs/reports/figures/task3_correlation_dimension.png).
+- Added a reproducible pandoc+XeLaTeX build script and generated the final PDF:
+	- Script: [scripts/build_ilin_report_pdf.sh](scripts/build_ilin_report_pdf.sh)
+	- Output: [docs/reports/Systems_Theory_Ilin.pdf](docs/reports/Systems_Theory_Ilin.pdf)
+
+Commands:
+- `conda run -n tsi python scripts/export_ilin_report_figures.py`
+- `scripts/build_ilin_report_pdf.sh`

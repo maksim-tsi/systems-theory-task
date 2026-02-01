@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 
 import pandas as pd
+from plotly.offline import get_plotlyjs
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -71,7 +72,9 @@ def generate_task3_report(
             .metric-card {{ background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
             .plot-container {{ margin-bottom: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
         </style>
-        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <script type="text/javascript">
+            {get_plotlyjs()}
+        </script>
     </head>
     <body>
         <h1>Task 3: Chaos Theory Analysis</h1>

@@ -18,6 +18,15 @@ This document captures high-level lessons learned during implementation to preve
 4. Keep derived datasets reproducible.
    - Action: regenerate artifacts after logic changes and document any behavioral shifts in analysis outputs.
 
+5. Chaos metrics can collapse on sparse or repeated values.
+   - Action: filter zero-distance pairs, avoid zero-variance windows, and report fit diagnostics (e.g., R²) for Hurst and $D_2$.
+
+6. R/S Hurst is sensitive to trend/seasonality.
+   - Action: apply daylight filtering or detrending and document the stationarity assumption before interpreting $H$.
+
+7. Local HTML reports may block external JS.
+   - Action: embed Plotly JS inline for offline previews to avoid empty charts.
+
 ## Update Rule
 - Append new lessons with date and short actionable guidance when a recurring or high-impact mistake is discovered.
 - Review this file at the start of any new modeling or preprocessing task.

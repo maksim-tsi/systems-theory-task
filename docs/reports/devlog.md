@@ -149,3 +149,16 @@ Task: Generated Task 3 chaos metrics artifact.
 Decisions made:
 - Ran chaos analysis on data/golden_sample.parquet with daytime window 08:00–22:00.
 - Saved results to docs/reports/artifacts/2026-02-01/chaos_metrics_analysis.txt.
+
+Task: Implemented robust chaos metrics and HTML reporting.
+
+Decisions made:
+- Added diagnostic versions of Hurst and correlation dimension (with log-log fit and R²) in src/chaos_metrics.py.
+- Extended src/visualization.py with phase portrait and log-log diagnostic plots.
+- Added src/report_generator.py and src/generate_task3_report.py to build an HTML report with Plotly figures.
+- Added tests for chaos diagnostics and report generation in tests/test_chaos.py.
+
+Task: Generated Task 3 HTML report.
+
+Decisions made:
+- Generated docs/reports/task3_chaos_report.html from data/golden_sample.parquet.

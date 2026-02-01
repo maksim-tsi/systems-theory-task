@@ -20,16 +20,32 @@ def hurst_rs(ts: Sequence[float]) -> float:
     Returns:
         Estimated Hurst exponent.
     """
+    details = hurst_rs_details(ts)
+    return float(details["H"])
+
+
+def hurst_rs_details(
+    ts: Sequence[float],
+    min_window: int = 8,
+    num_scales: int = 20,
+) -> dict[str, float | np.ndarray | bool]:
+    """Estimate the Hurst exponent via R/S analysis with diagnostics.
+
+    Args:
+        ts: 1D time series.
+        min_window: Smallest window size.
+        num_scales: Number of log-spaced windows.
+
+    Returns:
+        Dict with H, scales_log, rs_log, r2, valid.
+    """
     x = np.asarray(ts, dtype=float)
     n = len(x)
     if n < 64 or np.allclose(np.std(x), 0.0):
-        return 0.5
+        return {"H": 0.5, "valid": False}
 
-    max_window = n // 4
-    window_sizes = _logspace_windows(8, max_window)
-    if len(window_sizes) < 2:
-        return 0.5
-
+    max_window = max(min_window + 1, n // 4)
+    window_sizes = _logspace_windows(min_window, max_window, num_scales)
     rs_values = []
     used_windows = []
     for w in window_sizes:
@@ -50,13 +66,20 @@ def hurst_rs(ts: Sequence[float]) -> float:
             rs_values.append(np.mean(rs_segment))
             used_windows.append(w)
 
-    if len(rs_values) < 2:
-        return 0.5
+    if len(rs_values) < 3:
+        return {"H": 0.5, "valid": False}
 
-    log_rs = np.log(rs_values)
-    log_w = np.log(used_windows)
-    slope, _ = np.polyfit(log_w, log_rs, 1)
-    return float(slope)
+    log_rs = np.log10(rs_values)
+    log_w = np.log10(used_windows)
+    slope, intercept = np.polyfit(log_w, log_rs, 1)
+    r2 = _r2_score(log_w, log_rs, slope, intercept)
+    return {
+        "H": float(slope),
+        "scales_log": log_w,
+        "rs_log": log_rs,
+        "r2": float(r2),
+        "valid": True,
+    }
 
 
 def correlation_dimension(ts: Sequence[float], k: int = 10) -> float:
@@ -72,17 +95,39 @@ def correlation_dimension(ts: Sequence[float], k: int = 10) -> float:
     Returns:
         Estimated correlation dimension D2.
     """
+    details = correlation_dimension_details(ts, emb_dim=2, delay=1, num_radii=k)
+    return float(details["D2"])
+
+
+def correlation_dimension_details(
+    ts: Sequence[float],
+    emb_dim: int = 2,
+    delay: int = 1,
+    num_radii: int = 15,
+) -> dict[str, float | np.ndarray | bool]:
+    """Estimate correlation dimension with diagnostics.
+
+    Args:
+        ts: 1D time series.
+        emb_dim: Embedding dimension.
+        delay: Time delay.
+        num_radii: Number of radii in log-space.
+
+    Returns:
+        Dict with D2, radii_log, cr_log, r2, valid.
+    """
     x = np.asarray(ts, dtype=float)
     if len(x) < 128 or np.allclose(np.std(x), 0.0):
-        return 0.0
+        return {"D2": 0.0, "valid": False}
 
     if nolds is not None:
         try:
-            return float(nolds.corr_dim(x, emb_dim=2, rvals=k))
+            d2 = float(nolds.corr_dim(x, emb_dim=emb_dim, rvals=num_radii))
+            return {"D2": d2, "valid": True}
         except Exception:
             pass
 
-    return float(_corr_dim_gp(x, k=k))
+    return _corr_dim_gp_details(x, emb_dim=emb_dim, delay=delay, num_radii=num_radii)
 
 
 def compute_chaos_metrics(ts: Sequence[float], k: int = 10) -> dict[str, float]:
@@ -101,44 +146,80 @@ def compute_chaos_metrics(ts: Sequence[float], k: int = 10) -> dict[str, float]:
     }
 
 
-def _logspace_windows(min_size: int, max_size: int) -> np.ndarray:
-    sizes = np.unique(np.floor(np.logspace(np.log10(min_size), np.log10(max_size), 8)).astype(int))
+def time_delay_embedding(series: Sequence[float], delay: int, dim: int) -> np.ndarray:
+    """Create a time-delay embedding of a series."""
+    x = np.asarray(series, dtype=float)
+    n = len(x)
+    if n < (dim - 1) * delay + 1:
+        raise ValueError("Series too short for embedding")
+    vectors = []
+    for i in range(n - (dim - 1) * delay):
+        vectors.append(x[i : i + dim * delay : delay])
+    return np.asarray(vectors)
+
+
+def _logspace_windows(min_size: int, max_size: int, num_scales: int) -> np.ndarray:
+    sizes = np.unique(
+        np.floor(
+            np.logspace(np.log10(min_size), np.log10(max_size), num_scales)
+        ).astype(int)
+    )
     return sizes[sizes >= min_size]
 
 
-def _corr_dim_gp(ts: Iterable[float], k: int = 10) -> float:
-    """Grassberger–Procaccia estimator with 2D embedding."""
+def _corr_dim_gp_details(
+    ts: Iterable[float],
+    emb_dim: int,
+    delay: int,
+    num_radii: int,
+    max_points: int = 2000,
+) -> dict[str, float | np.ndarray | bool]:
+    """Grassberger–Procaccia estimator with diagnostics."""
     x = np.asarray(list(ts), dtype=float)
     n = len(x)
     if n < 128 or np.allclose(np.std(x), 0.0):
-        return 0.0
+        return {"D2": 0.0, "valid": False}
 
-    # 2D time-delay embedding
-    m = 2
-    tau = 1
-    embedded = np.column_stack([x[i : n - (m - 1) * tau + i] for i in range(0, m * tau, tau)])
-    if embedded.shape[0] > 2000:
-        idx = np.linspace(0, embedded.shape[0] - 1, 2000).astype(int)
+    embedded = time_delay_embedding(x, delay=delay, dim=emb_dim)
+    if embedded.shape[0] > max_points:
+        idx = np.linspace(0, embedded.shape[0] - 1, max_points).astype(int)
         embedded = embedded[idx]
 
-    diff = embedded[:, None, :] - embedded[None, :, :]
-    dist = np.linalg.norm(diff, axis=2)
-    dist = dist[np.triu_indices(dist.shape[0], k=1)]
-    if dist.size == 0:
-        return 0.0
+    from scipy.spatial.distance import pdist
 
-    r_min = np.percentile(dist, 5)
-    r_max = np.percentile(dist, 80)
+    dists = pdist(embedded, metric="euclidean")
+    dists = dists[dists > 0]
+    if dists.size == 0:
+        return {"D2": 0.0, "valid": False}
+
+    r_min = np.percentile(dists, 5)
+    r_max = np.percentile(dists, 80)
     if r_min <= 0 or r_max <= r_min:
-        return 0.0
+        return {"D2": 0.0, "valid": False}
 
-    radii = np.logspace(np.log10(r_min), np.log10(r_max), k)
-    c_vals = np.array([(dist < r).mean() for r in radii])
-    valid = c_vals > 0
-    if valid.sum() < 2:
-        return 0.0
+    radii = np.logspace(np.log10(r_min), np.log10(r_max), num_radii)
+    c_vals = np.array([(dists < r).mean() for r in radii])
+    valid = (c_vals > 0) & (c_vals < 1)
+    if valid.sum() < 3:
+        return {"D2": 0.0, "valid": False}
 
-    log_r = np.log(radii[valid])
-    log_c = np.log(c_vals[valid])
-    slope, _ = np.polyfit(log_r, log_c, 1)
-    return float(slope)
+    log_r = np.log10(radii[valid])
+    log_c = np.log10(c_vals[valid])
+    slope, intercept = np.polyfit(log_r, log_c, 1)
+    r2 = _r2_score(log_r, log_c, slope, intercept)
+    return {
+        "D2": float(slope),
+        "radii_log": log_r,
+        "cr_log": log_c,
+        "r2": float(r2),
+        "valid": True,
+    }
+
+
+def _r2_score(x: np.ndarray, y: np.ndarray, slope: float, intercept: float) -> float:
+    y_pred = slope * x + intercept
+    ss_res = np.sum((y - y_pred) ** 2)
+    ss_tot = np.sum((y - np.mean(y)) ** 2)
+    if ss_tot == 0:
+        return 0.0
+    return 1.0 - ss_res / ss_tot

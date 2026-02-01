@@ -8,7 +8,7 @@ For the chaos task, we analyze the "golden sample" hourly sales series (daytime 
 
 \newpage
 
-# Assignment Alignment and Research Object
+# Assignment Alignment and Research Object {.unnumbered}
 
 The research object is an urban logistics inventory replenishment system for perishable goods. We use FreshRetailNet-50K, a stockout-annotated censored demand dataset. The empirical indicator for Task 3 is the hourly sales series of the "golden sample" SKU/time window derived in the project pipeline.
 
@@ -31,8 +31,8 @@ The inventory system is modeled as a unity-feedback loop where the controller ge
 **Elements and interpretation**
 
 - **Reference** $I_{target}$: desired inventory level (setpoint).
-- **Error** $e(t)=I_{target}-I(t)$: deviation from target.
-- **Controller** $K_p$: proportional replenishment policy.
+- **Error** $E(t)=I_{target}-I(t)$: deviation from target.
+- **Controller output** $U(t)$: proportional replenishment policy signal.
 - **Lead time / delay** $L$: transport delay in the supply chain.
 - **Plant / process**: inventory mass balance (integrator in linear approximation).
 - **Disturbance** $D(t)$: demand (hourly sales), subtracts inventory.
@@ -51,7 +51,7 @@ $$
 U(t)=K_p\left(I_{target}-I(t)\right).
 $$
 
-Optional transport delay $e^{-Ls}$~is approximated by first-order Padé:
+Optional transport delay term is approximated by first-order Padé: $e^{-Ls}$.
 
 $$
 G_d(s) \approx \frac{1 - \frac{Ls}{2}}{1 + \frac{Ls}{2}}.
@@ -62,12 +62,12 @@ $$
 With unity feedback and an integrator plant, the reference-to-output closed-loop transfer function is:
 
 $$
-G_{\text{cl}}(s)=\frac{K_p}{s+K_p}.
+G_{\mathrm{cl}}(s)=\frac{K_{\mathrm{p}}}{s+K_{\mathrm{p}}}.
 $$
 
-The characteristic equation is $s+K_p=0$ with pole $s=-K_p$. Therefore, the baseline system is stable for $K_p>0$.
+The characteristic equation is $s+K_{\mathrm{p}}=0$ with pole $s=-K_{\mathrm{p}}$. Therefore, the baseline system is stable for $K_{\mathrm{p}}>0$.
 
-**Effect of lead time.** Introducing delay increases phase lag and can destabilize the loop for sufficiently large $K_p$ and $L$. In the project implementation, a Padé approximation is used and the resulting poles indicate loss of stability in a scenario with significant delay (e.g., $L=2$ in model time units), consistent with the bullwhip effect under transportation/ordering latency.
+**Effect of lead time.** Introducing delay increases phase lag and can destabilize the loop for sufficiently large $K_{\mathrm{p}}$ and $L$. In the project implementation, a Padé approximation is used and the resulting poles indicate loss of stability in a scenario with significant delay (e.g., $L=2$ in model time units), consistent with the bullwhip effect under transportation/ordering latency.
 
 \newpage
 

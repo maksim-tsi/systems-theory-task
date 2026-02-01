@@ -18,3 +18,14 @@ Next steps:
 - Performed a live integration test: successfully streamed one example from `Dingdong-Inc/FreshRetailNet-50K` and verified it is publicly accessible (no HF token required).
 - Added `.gitignore` patterns for large/binary files and a `scripts/check_large_files.py` check with a corresponding GitHub Action to prevent committing files >100MB.
 - Added CI workflow `.github/workflows/ci-conda-tsi.yml` which creates and activates the `tsi` conda environment from `environment.yml`, runs the large-file check and executes the test-suite using `pytest`.
+
+Task: Planned execution of assignment.
+
+Decisions made:
+- Created a detailed execution plan aligned to docs/assignment.md in docs/plans/assignment-plan.md.
+
+Updates:
+- Expanded plan to include smart SKU selection (heuristic ranking), parameter estimation for models, and visualization artifacts.
+
+Next steps:
+- Execute the plan starting with data loading/preprocessing TDD.

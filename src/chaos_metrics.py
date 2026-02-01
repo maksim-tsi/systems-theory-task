@@ -10,6 +10,11 @@ try:  # Optional dependency
 except Exception:  # pragma: no cover - optional dependency
     nolds = None
 
+try:  # Optional dependency
+    from sklearn.linear_model import LinearRegression  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    LinearRegression = None
+
 
 def hurst_rs(ts: Sequence[float]) -> float:
     """Estimate the Hurst exponent via rescaled range (R/S) analysis.
@@ -28,6 +33,7 @@ def hurst_rs_details(
     ts: Sequence[float],
     min_window: int = 8,
     num_scales: int = 20,
+    use_sklearn: bool = False,
 ) -> dict[str, float | np.ndarray | bool]:
     """Estimate the Hurst exponent via R/S analysis with diagnostics.
 
@@ -71,8 +77,7 @@ def hurst_rs_details(
 
     log_rs = np.log10(rs_values)
     log_w = np.log10(used_windows)
-    slope, intercept = np.polyfit(log_w, log_rs, 1)
-    r2 = _r2_score(log_w, log_rs, slope, intercept)
+    slope, intercept, r2 = _fit_line(log_w, log_rs, use_sklearn=use_sklearn)
     return {
         "H": float(slope),
         "scales_log": log_w,
@@ -104,6 +109,7 @@ def correlation_dimension_details(
     emb_dim: int = 2,
     delay: int = 1,
     num_radii: int = 15,
+    use_sklearn: bool = False,
 ) -> dict[str, float | np.ndarray | bool]:
     """Estimate correlation dimension with diagnostics.
 
@@ -127,7 +133,13 @@ def correlation_dimension_details(
         except Exception:
             pass
 
-    return _corr_dim_gp_details(x, emb_dim=emb_dim, delay=delay, num_radii=num_radii)
+    return _corr_dim_gp_details(
+        x,
+        emb_dim=emb_dim,
+        delay=delay,
+        num_radii=num_radii,
+        use_sklearn=use_sklearn,
+    )
 
 
 def compute_chaos_metrics(ts: Sequence[float], k: int = 10) -> dict[str, float]:
@@ -172,6 +184,7 @@ def _corr_dim_gp_details(
     emb_dim: int,
     delay: int,
     num_radii: int,
+    use_sklearn: bool,
     max_points: int = 2000,
 ) -> dict[str, float | np.ndarray | bool]:
     """Grassberger–Procaccia estimator with diagnostics."""
@@ -205,8 +218,7 @@ def _corr_dim_gp_details(
 
     log_r = np.log10(radii[valid])
     log_c = np.log10(c_vals[valid])
-    slope, intercept = np.polyfit(log_r, log_c, 1)
-    r2 = _r2_score(log_r, log_c, slope, intercept)
+    slope, intercept, r2 = _fit_line(log_r, log_c, use_sklearn=use_sklearn)
     return {
         "D2": float(slope),
         "radii_log": log_r,
@@ -214,6 +226,24 @@ def _corr_dim_gp_details(
         "r2": float(r2),
         "valid": True,
     }
+
+
+def _fit_line(
+    x: np.ndarray,
+    y: np.ndarray,
+    use_sklearn: bool,
+) -> tuple[float, float, float]:
+    if use_sklearn and LinearRegression is not None:
+        model = LinearRegression()
+        model.fit(x.reshape(-1, 1), y)
+        slope = float(model.coef_[0])
+        intercept = float(model.intercept_)
+        r2 = float(model.score(x.reshape(-1, 1), y))
+        return slope, intercept, r2
+
+    slope, intercept = np.polyfit(x, y, 1)
+    r2 = _r2_score(x, y, slope, intercept)
+    return float(slope), float(intercept), float(r2)
 
 
 def _r2_score(x: np.ndarray, y: np.ndarray, slope: float, intercept: float) -> float:

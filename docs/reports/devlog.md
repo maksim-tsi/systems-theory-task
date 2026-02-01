@@ -162,3 +162,10 @@ Task: Generated Task 3 HTML report.
 
 Decisions made:
 - Generated docs/reports/task3_chaos_report.html from data/golden_sample.parquet.
+
+Task: Added scikit-learn chaos analysis run.
+
+Decisions made:
+- Added sklearn-enabled regression fitting in src/chaos_metrics.py.
+- Added sklearn analysis runner in src/chaos_analysis_sklearn.py and comparison artifact generator.
+- Added sklearn-conditional test in tests/test_chaos.py.

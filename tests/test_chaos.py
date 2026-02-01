@@ -68,6 +68,17 @@ def test_correlation_dimension_details_valid():
     assert details.get("valid") is True
 
 
+def test_hurst_rs_details_sklearn_if_available():
+    rng = np.random.default_rng(12)
+    ts = rng.normal(size=2048)
+    try:
+        import sklearn  # noqa: F401
+    except Exception:
+        return
+    details = chaos_metrics.hurst_rs_details(ts, use_sklearn=True)
+    assert details.get("valid") is True
+
+
 def test_save_analysis_writes_file(tmp_path):
     analysis = {
         "daytime_hourly": {"hurst": 0.5, "d2": 1.1},

@@ -126,3 +126,9 @@ Decisions made:
 - Added TDD coverage for equilibrium and classification in tests/test_models.py.
 - Extended config parameters for nonlinear model in config/params.yaml.
 - Generated nonlinear model analysis artifact and created Task 2 report.
+
+Task: Implemented chaos metrics (Task 3) core estimators.
+
+Decisions made:
+- Replaced stub chaos tests with Hurst R/S expectations for white noise, persistent trend, and anti-persistent AR(1) series in tests/test_chaos.py.
+- Implemented Hurst R/S estimator and correlation dimension (nolds if available, GP fallback) in src/chaos_metrics.py.

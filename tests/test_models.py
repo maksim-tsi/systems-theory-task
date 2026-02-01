@@ -14,6 +14,58 @@ def test_integrate_inventory_simple():
     assert ys[0] == 10.0
 
 
+def test_inventory_equilibrium_point_matches_formula():
+    params = {
+        "inventory_decay_rate": 0.2,
+        "temperature_sensitivity": 0.0,
+        "temperature": 20.0,
+        "demand": 5.0,
+        "replenishment_gain": 2.0,
+        "replenishment_decay": 1.0,
+        "i_target": 10.0,
+    }
+    decay = params["inventory_decay_rate"]
+    alpha = params["replenishment_gain"]
+    beta = params["replenishment_decay"]
+    i_target = params["i_target"]
+    demand = params["demand"]
+    expected_i = (alpha / beta * i_target - demand) / (alpha / beta + decay)
+    expected_r = demand + decay * expected_i
+
+    equilibrium = nonlinear_model.compute_equilibrium(params)
+    assert np.allclose(equilibrium, [expected_i, expected_r])
+
+
+def test_inventory_equilibrium_classification_focus():
+    params = {
+        "inventory_decay_rate": 0.1,
+        "temperature_sensitivity": 0.0,
+        "temperature": 20.0,
+        "demand": 1.0,
+        "replenishment_gain": 1.0,
+        "replenishment_decay": 0.1,
+        "i_target": 5.0,
+    }
+    result = nonlinear_model.classify_equilibrium(params)
+    assert result["type"] == "focus"
+    assert result["is_stable"] is True
+
+
+def test_inventory_equilibrium_classification_node():
+    params = {
+        "inventory_decay_rate": 3.0,
+        "temperature_sensitivity": 0.0,
+        "temperature": 20.0,
+        "demand": 1.0,
+        "replenishment_gain": 0.1,
+        "replenishment_decay": 1.0,
+        "i_target": 5.0,
+    }
+    result = nonlinear_model.classify_equilibrium(params)
+    assert result["type"] == "node"
+    assert result["is_stable"] is True
+
+
 def test_inventory_control_step_response_shape():
     system = linear_model.InventoryControlSystem(kp=1.5, i_target=2.0)
     t, y = system.simulate_step_response(duration=5.0, num_points=100)

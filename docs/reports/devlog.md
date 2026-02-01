@@ -118,3 +118,11 @@ Decisions made:
 - Ran pytest tests/ (all passing).
 - Regenerated linear ACS analysis artifact with disturbance and delay scenarios.
 - Updated Task 1 report computed results to reflect new artifact values.
+
+Task: Implemented nonlinear model (Task 2) with equilibrium analysis.
+
+Decisions made:
+- Added 2D inventory–replenishment ODE with temperature-dependent decay, equilibrium solver, Jacobian, and stability classification in src/nonlinear_model.py.
+- Added TDD coverage for equilibrium and classification in tests/test_models.py.
+- Extended config parameters for nonlinear model in config/params.yaml.
+- Generated nonlinear model analysis artifact and created Task 2 report.

@@ -7,9 +7,10 @@ import numpy as np
 
 
 try:
-    from scipy.signal import TransferFunction
+    from scipy.signal import TransferFunction, pade
 except Exception:  # pragma: no cover - absent scipy
     TransferFunction = object
+    pade = None
 
 
 def build_acs_transfer_function(integrator_gain: float = 1.0, delay: float = 0.0):
@@ -26,7 +27,26 @@ def build_acs_transfer_function(integrator_gain: float = 1.0, delay: float = 0.0
     if TransferFunction is object:
         # Fallback: return tuple zeros/poles
         return (np.array([integrator_gain]), np.array([1.0, 0.0]))
+    if delay > 0.0 and pade is not None:
+        num_d, den_d = pade(delay, 1)
+        num = np.polymul([integrator_gain], np.asarray(num_d, dtype=float))
+        den = np.polymul([1.0, 0.0], np.asarray(den_d, dtype=float))
+        return TransferFunction(num, den)
     return TransferFunction([integrator_gain], [1.0, 0.0])
+
+
+def _tf_multiply(num_a: np.ndarray, den_a: np.ndarray, num_b: np.ndarray, den_b: np.ndarray):
+    """Multiply two transfer functions represented as numerator/denominator arrays."""
+    num = np.polymul(num_a, num_b)
+    den = np.polymul(den_a, den_b)
+    return num, den
+
+
+def _tf_add(num_a: np.ndarray, den_a: np.ndarray, num_b: np.ndarray, den_b: np.ndarray):
+    """Add two transfer functions represented as numerator/denominator arrays."""
+    num = np.polyadd(np.polymul(num_a, den_b), np.polymul(num_b, den_a))
+    den = np.polymul(den_a, den_b)
+    return num, den
 
 
 class InventoryControlSystem:
@@ -35,22 +55,61 @@ class InventoryControlSystem:
     Models: I(s) = (1/s) * (U(s) - D(s)), U(t) = Kp * (I_target - I(t)).
     """
 
-    def __init__(self, kp: float, i_target: float = 1.0) -> None:
+    def __init__(self, kp: float, i_target: float = 1.0, delay: float = 0.0) -> None:
         """Initialize controller gains and target.
 
         Args:
             kp: Proportional gain Kp.
             i_target: Target inventory level for step response.
+            delay: Transport delay (lead time) in model time units.
         """
         self.kp = float(kp)
         self.i_target = float(i_target)
+        self.delay = float(delay)
+
+    def _delay_polynomials(self) -> Tuple[np.ndarray, np.ndarray]:
+        if self.delay > 0.0:
+            if pade is None or TransferFunction is object:
+                raise RuntimeError("Delay modeling requires scipy.signal.pade.")
+            num_d, den_d = pade(self.delay, 1)
+            return np.asarray(num_d, dtype=float), np.asarray(den_d, dtype=float)
+        return np.array([1.0]), np.array([1.0])
+
+    def _open_loop_polynomials(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Return (num_L, den_L, num_p, den_p) for open-loop and plant."""
+        num_p = np.array([1.0])
+        den_p = np.array([1.0, 0.0])
+        num_d, den_d = self._delay_polynomials()
+        num_c = np.array([self.kp])
+        den_c = np.array([1.0])
+
+        num_cd, den_cd = _tf_multiply(num_c, den_c, num_d, den_d)
+        num_L, den_L = _tf_multiply(num_cd, den_cd, num_p, den_p)
+        return num_L, den_L, num_p, den_p
 
     def _closed_loop_tf(self):
         """Build closed-loop transfer function from I_target to I."""
         if TransferFunction is object:
             raise RuntimeError("scipy.signal.TransferFunction is required for transfer functions.")
-        # Closed-loop: Kp/(s + Kp)
-        return TransferFunction([self.kp], [1.0, self.kp])
+        return self.transfer_function_reference()
+
+    def transfer_function_reference(self):
+        """Closed-loop transfer function from I_target to I."""
+        if TransferFunction is object:
+            raise RuntimeError("scipy.signal.TransferFunction is required for transfer functions.")
+        num_L, den_L, _, _ = self._open_loop_polynomials()
+        den_cl = np.polyadd(den_L, num_L)
+        return TransferFunction(num_L, den_cl)
+
+    def transfer_function_disturbance(self):
+        """Closed-loop transfer function from demand disturbance D to inventory I."""
+        if TransferFunction is object:
+            raise RuntimeError("scipy.signal.TransferFunction is required for transfer functions.")
+        num_L, den_L, num_p, den_p = self._open_loop_polynomials()
+        den_cl = np.polyadd(den_L, num_L)
+        num_dist = -np.polymul(num_p, den_L)
+        den_dist = np.polymul(den_p, den_cl)
+        return TransferFunction(num_dist, den_dist)
 
     def simulate_step_response(
         self,

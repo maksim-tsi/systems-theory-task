@@ -25,3 +25,20 @@ def test_inventory_control_stability_positive_gain():
     system = linear_model.InventoryControlSystem(kp=0.8, i_target=1.0)
     result = system.analyze_stability()
     assert result["is_stable"] is True
+
+
+def test_inventory_control_disturbance_transfer_delay_zero():
+    system = linear_model.InventoryControlSystem(kp=2.0, i_target=1.0, delay=0.0)
+    tf = system.transfer_function_disturbance()
+    num = np.asarray(tf.num, dtype=float).ravel()
+    den = np.asarray(tf.den, dtype=float).ravel()
+    assert np.isclose(num[-1], -1.0)
+    assert len(den) == 2
+    assert np.isclose(den[-1], 2.0)
+
+
+def test_inventory_control_delay_increases_order():
+    system = linear_model.InventoryControlSystem(kp=1.0, i_target=1.0, delay=2.0)
+    tf = system.transfer_function_reference()
+    den = np.asarray(tf.den, dtype=float).ravel()
+    assert len(den) > 2

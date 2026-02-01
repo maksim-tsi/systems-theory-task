@@ -104,3 +104,10 @@ Task: Drafted Task 1 linear ACS report.
 
 Decisions made:
 - Added report with derived transfer functions, stability analysis, and recommendations in docs/reports/task1-linear-acs-report.md.
+
+Task: Extended linear ACS model with delay and disturbance response.
+
+Decisions made:
+- Added lead-time (Padé) delay support and explicit disturbance transfer function in src/linear_model.py.
+- Added tests for delay order increase and disturbance transfer behavior in tests/test_models.py.
+- Updated Task 1 report with SCM interpretation, delay element, and demand-rejection transfer function.

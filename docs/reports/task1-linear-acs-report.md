@@ -24,7 +24,11 @@ flowchart LR
 	I -->|feedback| E
 ```
 
-Interpretation: The controller computes a replenishment signal $U(t)$ based on the error between desired and actual inventory. The process integrates the net flow $U(t) - D(t)$ into inventory $I(t)$.
+Interpretation:
+- **Controller ($G_c$):** replenishment policy (e.g., order-up-to) that sets $U(t)$ proportional to the inventory deficit.
+- **Process ($G_p$):** conservation of mass in the warehouse; inventory is the time-integral of net inflow $U(t)-D(t)$.
+- **Disturbance ($D$):** hourly sales rate from the dataset that depletes inventory.
+- **Feedback loop:** attempts to restore $I(t)$ to $I_{target}$ under stochastic demand.
 
 ## 3. Element Transfer Functions (Linear Approximation)
 **for review** — Linearized elements used in the model:
@@ -37,6 +41,9 @@ Interpretation: The controller computes a replenishment signal $U(t)$ based on t
 	$$U(t) = K_p\bigl(I_{target} - I(t)\bigr)$$
 	Transfer from error $E(s)$ to $U(s)$: $$G_c(s) = K_p$$
 
+- **Lead time (delay) approximation (optional):**
+	$$G_d(s) = e^{-Ls} \approx \frac{1 - \frac{Ls}{2}}{1 + \frac{Ls}{2}}$$
+
 Assumption: demand $D(s)$ is treated as a disturbance input; the closed-loop transfer below is from $I_{target}$ to $I$.
 
 ## 4. Overall Closed-Loop Transfer Function
@@ -46,6 +53,15 @@ $$G_{cl}(s) = \frac{G_c(s)G_p(s)}{1 + G_c(s)G_p(s)} = \frac{K_p \cdot (1/s)}{1 +
 
 **Characteristic equation:**
 $$s + K_p = 0$$
+
+## 4b. Disturbance Transfer Function (Demand Rejection)
+For SCM, the key response is to demand $D(s)$. With negative feedback and disturbance at the plant input:
+
+$$G_{DI}(s) = \frac{I(s)}{D(s)} = -\frac{G_p(s)}{1 + G_c(s)G_d(s)G_p(s)}$$
+
+For $L=0$ (no delay):
+
+$$G_{DI}(s) = -\frac{1}{s+K_p}$$
 
 ## 5. Stability Analysis
 The system is stable if all closed-loop poles have negative real parts. For $G_{cl}(s) = \frac{K_p}{s + K_p}$, the pole is at $s = -K_p$.
@@ -70,7 +86,8 @@ See the recorded outputs in [docs/reports/artifacts/2026-02-01/linear_control_an
 2. **Add interpretive notes** for each element (controller, integrator, disturbance) and relate to the supply-chain context (**for review**).
 3. **Consider parameter selection**: test multiple $K_p$ values to show stability margin and response speed (rise time, settling time).
 4. **Document disturbance response** (transfer from $D$ to $I$) to describe stockout sensitivity.
-5. **Integrate results into final PDF report** with a short narrative for Task 1.
+5. **Add lead time scenario** using Padé delay approximation and show how stability margin decreases with larger $L$.
+6. **Integrate results into final PDF report** with a short narrative for Task 1.
 
 ## 8. Conclusion
 The linear ACS model for inventory control is fully specified with a proportional controller and integrator process. The resulting closed-loop transfer function $G_{cl}(s) = \frac{K_p}{s + K_p}$ yields a single pole at $s = -K_p$, ensuring stability for any $K_p > 0$. The computed artifact confirms stability for the current configuration and provides concrete values to reference in the final report.

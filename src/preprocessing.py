@@ -40,5 +40,5 @@ def impute_stockouts(df: pd.DataFrame, value_col: str = "sales") -> pd.DataFrame
     if value_col not in out.columns:
         raise KeyError(f"Column {value_col} not found in DataFrame")
     out[value_col] = out[value_col].replace(0, np.nan)
-    out[value_col] = out[value_col].interpolate(method="linear").fillna(method="ffill").fillna(0)
+    out[value_col] = out[value_col].interpolate(method="linear").ffill().fillna(0)
     return out

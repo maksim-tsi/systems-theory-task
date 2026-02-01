@@ -38,3 +38,14 @@ Decisions made:
 
 Next steps:
 - Run pytest tests/ and adjust based on failures.
+
+Task: Addressed preprocessing warning.
+
+Decisions made:
+- Replaced deprecated fillna(method="ffill") with ffill() in src/preprocessing.py to preserve behavior without warnings.
+
+Task: Updated data loader to blind bestseller strategy.
+
+Decisions made:
+- Replaced data loader API with category-agnostic scan_and_select and hourly expansion aligned to first_category_id fields.
+- Updated tests in tests/test_data_loader.py to match new API and 24-hour expansion behavior.

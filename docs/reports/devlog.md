@@ -137,3 +137,15 @@ Task: Added daytime filtering and daily aggregation helpers.
 
 Decisions made:
 - Added filter_daytime_hours and aggregate_daily utilities to src/preprocessing.py with tests in tests/test_preprocessing.py.
+
+Task: Added chaos analysis script for golden sample.
+
+Decisions made:
+- Added src/chaos_analysis.py to compute Hurst and correlation dimension on daytime hourly and daily aggregated series and save artifacts.
+- Added a small IO test for saving artifacts in tests/test_chaos.py.
+
+Task: Generated Task 3 chaos metrics artifact.
+
+Decisions made:
+- Ran chaos analysis on data/golden_sample.parquet with daytime window 08:00–22:00.
+- Saved results to docs/reports/artifacts/2026-02-01/chaos_metrics_analysis.txt.

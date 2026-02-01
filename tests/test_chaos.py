@@ -1,6 +1,7 @@
 import numpy as np
 
 from src import chaos_metrics
+from src import chaos_analysis
 
 
 def _ar1(phi: float, n: int, seed: int = 0) -> np.ndarray:
@@ -39,3 +40,25 @@ def test_correlation_dimension_reasonable_range():
     ts = rng.normal(size=1500)
     d2 = chaos_metrics.correlation_dimension(ts, k=12)
     assert 0.1 < d2 < 2.0
+
+
+def test_compute_chaos_metrics_returns_keys():
+    rng = np.random.default_rng(9)
+    ts = rng.normal(size=1200)
+    metrics = chaos_metrics.compute_chaos_metrics(ts)
+    assert set(metrics.keys()) == {"hurst", "d2"}
+    assert 0.0 <= metrics["d2"] <= 2.0
+
+
+def test_save_analysis_writes_file(tmp_path):
+    analysis = {
+        "daytime_hourly": {"hurst": 0.5, "d2": 1.1},
+        "daytime_daily": {"hurst": 0.6, "d2": 0.9},
+        "n_hourly": 100,
+        "n_daily": 10,
+        "start_hour": 8,
+        "end_hour": 22,
+    }
+    out_path = tmp_path / "chaos.txt"
+    chaos_analysis.save_analysis(analysis, out_path)
+    assert out_path.exists()

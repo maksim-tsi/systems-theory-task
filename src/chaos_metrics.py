@@ -85,6 +85,22 @@ def correlation_dimension(ts: Sequence[float], k: int = 10) -> float:
     return float(_corr_dim_gp(x, k=k))
 
 
+def compute_chaos_metrics(ts: Sequence[float], k: int = 10) -> dict[str, float]:
+    """Compute Hurst exponent and correlation dimension for a series.
+
+    Args:
+        ts: 1D time series.
+        k: Parameter for correlation dimension.
+
+    Returns:
+        Dict with keys "hurst" and "d2".
+    """
+    return {
+        "hurst": hurst_rs(ts),
+        "d2": correlation_dimension(ts, k=k),
+    }
+
+
 def _logspace_windows(min_size: int, max_size: int) -> np.ndarray:
     sizes = np.unique(np.floor(np.logspace(np.log10(min_size), np.log10(max_size), 8)).astype(int))
     return sizes[sizes >= min_size]

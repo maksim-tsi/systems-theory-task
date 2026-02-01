@@ -27,6 +27,9 @@ This document captures high-level lessons learned during implementation to preve
 7. Local HTML reports may block external JS.
    - Action: embed Plotly JS inline for offline previews to avoid empty charts.
 
+8. Pandoc + raw LaTeX blocks can silently corrupt backslashes during JSON-based edits.
+   - Action: avoid inline raw LaTeX for complex title pages; instead use a separate .tex file and include it via pandoc (--include-before-body). This prevents accidental \t/\b escapes and preserves commands like \textbf and \thispagestyle.
+
 ## Update Rule
 - Append new lessons with date and short actionable guidance when a recurring or high-impact mistake is discovered.
 - Review this file at the start of any new modeling or preprocessing task.

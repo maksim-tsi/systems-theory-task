@@ -189,3 +189,16 @@ Decisions made:
 Commands:
 - `conda run -n tsi python scripts/export_ilin_report_figures.py`
 - `scripts/build_ilin_report_pdf.sh`
+
+Task: Fixed PDF formatting issues (TOC numbering, page breaks, math typography).
+
+Decisions made:
+- Removed manual numbering from section titles to let LaTeX handle numbering cleanly.
+- Marked Abstract and References as unnumbered and adjusted page breaks to prevent orphaned headings.
+- Improved math typography (e.g., $G_{\text{cl}}(s)$) and replaced the local HTML link with an attachment note.
+
+Task: Title page + TOC placement fix.
+
+Decisions made:
+- Moved the title page to a dedicated LaTeX include: [docs/reports/titlepage.tex](docs/reports/titlepage.tex).
+- Updated the PDF build to include the title page before the TOC and ensured the Abstract starts on a new page.

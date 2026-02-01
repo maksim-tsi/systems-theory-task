@@ -1,0 +1,18 @@
+Linear Control System (ACS) - Computed Quantities
+=
+Kp = 1.0
+I_target = 1.0
+
+Process: I(s) = (1/s) * (U(s) - D(s))
+Controller: U(t) = Kp * (I_target - I(t))
+
+Closed-loop transfer function (from I_target to I):
+  G_cl(s) = Kp / (s + Kp)
+  Numerator: [1.]
+  Denominator: [1. 1.]
+
+Characteristic equation: s + Kp = 0
+Closed-loop poles:
+  -1.0
+
+Stability (all poles real parts < 0): True

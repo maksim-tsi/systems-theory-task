@@ -89,3 +89,18 @@ Task: Removed conda from CI.
 Decisions made:
 - Replaced conda-based CI workflow with actions/setup-python and pip installs.
 - Updated AGENTS.md and copilot instructions to reflect non-conda CI.
+
+Task: Implemented linear inventory control system.
+
+Decisions made:
+- Added `InventoryControlSystem` with proportional control, step response simulation, and closed-loop stability analysis in src/linear_model.py.
+
+Task: Generated linear ACS analysis artifact.
+
+Decisions made:
+- Saved computed transfer function and stability results to docs/reports/artifacts/2026-02-01/linear_control_analysis.txt.
+
+Task: Drafted Task 1 linear ACS report.
+
+Decisions made:
+- Added report with derived transfer functions, stability analysis, and recommendations in docs/reports/task1-linear-acs-report.md.

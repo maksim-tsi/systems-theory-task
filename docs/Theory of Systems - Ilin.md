@@ -1,260 +1,228 @@
-TRANSPORT AND TELECOMMUNICATION INSTITUTE  
-DOCTORAL FACULTY  
-TELEMATICS AND LOGISTICS  
-   
-   
-**SELF-STUDY ASSIGNMENT**  
-   
-# Nonlinear Dynamics and Chaos in Urban Logistics Inventory Systems: An Empirical Analysis of FreshRetailNet-50K
-
-of the course "Systems Theory" for doctoral students  
-   
-   
-   
-   
-   
-   
-STUDENT:     
-Maksim ILIN (83835)  
-GROUP:  
-5402DTL
-
-   
- 
-
-   
-   
-2026  
-Riga
-
-This research investigates the dynamic behavior of perishable inventory systems using high-frequency data from the FreshRetailNet-50K dataset. The study follows a three-stage systems theory approach. First, a Linear Control System (ACS) model defines the inventory loop as an integrator with proportional control; stability analysis demonstrates that while theoretically stable, the system loses stability under significant transport delays ($L=2$), mimicking real-world supply chain latency. Second, a Nonlinear Dynamic Model (2nd order ODE) incorporating temperature-dependent spoilage reveals a "Stable Focus" equilibrium, explaining the damped oscillations often observed as the Bullwhip Effect. Finally, empirical Chaos Analysis of the "Golden Sample" hourly time series identifies a Hurst Exponent ($H \\approx 0.59$) and a fractional Correlation Dimension ($D\_2 \\approx 1.15$). These findings confirm the presence of a Strange Attractor, suggesting that the inventory system operates in a regime of low-dimensional deterministic chaos driven by censored demand (stockouts) and replenishment constraints.
-
-## **Task 1 Report: Linear Control System (ACS) Analysis**
-
-### **1. Introduction**
-
-This section documents the linear automatic control system (ACS) formulation for the inventory dynamics of the doctoral research object. The goal is to provide a clear control-theoretic representation, derive the necessary transfer functions, and establish stability criteria to support subsequent nonlinear and chaos analyses.
-
-### **2. ACS Structural Diagram**
-
-The inventory control system is modeled as a feedback loop where the controller adjusts replenishment based on the error between the target and actual inventory levels.
-
-**[INSERT STRUCTURAL DIAGRAM HERE]**
-
-**Interpretation of Elements:**
-
-* **Controller ():** Represents the replenishment policy (e.g., order-up-to) that sets the replenishment rate  proportional to the inventory deficit ().
-* **Process ():** Represents the conservation of mass in the warehouse; inventory  is the time-integral of the net flow ().
-* **Disturbance ():** The hourly sales rate (demand) from the *FreshRetailNet-50K* dataset that depletes the inventory.
-* **Feedback Loop:** The mechanism that attempts to restore inventory  to the target level  despite stochastic demand.
-
-### **3. Element Transfer Functions**
-
-The system components are described by the following linear approximations:
-
-* **Process (Inventory Integrator):**
-
-
-* **Controller (Proportional):**
-
-
-* **Lead Time (Optional Delay):**
-For scenarios with transport delay , the delay is approximated using a first-order Padé approximation:
-
-
-
-### **4. Closed-Loop Transfer Function & Stability**
-
-Combining the controller and process with unity feedback, the overall closed-loop transfer function from the target inventory  to the actual inventory  is derived as:
-
-**Stability Analysis:**
-The characteristic equation of the system is , which yields a single pole at .
-
-* **Condition:** The system is stable if the real part of the pole is negative ().
-* **Result:** For any positive proportional gain (), the baseline first-order system is theoretically stable.
-
-### **5. Simulation Results and Discussion**
-
-Using the implemented Python model with , the following behaviors were observed:
-
-1. **Baseline Scenario (No Delay):**
-* Transfer function: .
-* Pole: .
-* **Outcome:** The system is stable and effectively tracks the inventory target.
-
-
-2. **Disturbance Rejection:**
-* The transfer function from Demand () to Inventory () is . The system inherently resists demand fluctuations, though a steady-state error may persist without integral action.
-
-
-3. **Effect of Supply Chain Lead Time ():**
-* When a transport delay of  hours is introduced (using Padé approximation), the system dynamics change significantly.
-* Resulting Poles:  and .
-* **Outcome:** The appearance of a positive pole () indicates that the system **loses stability**. This mathematically confirms that while the simplified model is stable, real-world delays can cause oscillations (Bullwhip Effect) or instability if the controller gain  is too high.
-
-
-
-### **6. Conclusion**
-
-The linear ACS model successfully defines the foundational mechanics of the inventory system. While the ideal proportional-integrator model ensures stability, the analysis demonstrates that the system is sensitive to transport delays. This justifies the need for the more complex nonlinear and chaotic analyses performed in subsequent tasks to capture realistic supply chain behaviors.
-
-Вот проект отчета по **Task 2 (Nonlinear Dynamic Model)**.
-
-Он составлен на английском языке, чтобы соответствовать стилю первого отчета и академическим требованиям. Структура продолжает логику исследования: после линейного анализа (Task 1) мы вводим физические нелинейности (порчу товара).
-
 ---
+title: "Nonlinear Dynamics and Chaos in Urban Logistics Inventory Systems: An Empirical Analysis of FreshRetailNet-50K"
+subtitle: "Self-Study Assignment — Systems Theory (Doctoral Program, 2025–2026)"
+author: "Maksim Ilin (83835), Group 5402DTL"
+date: "2026-02-01"
+lang: en
+...
 
-## **Task 2 Report: Nonlinear Dynamic Model Analysis**
+\newpage
 
-### **1. Introduction**
+	hispagestyle{empty}
 
-This section details the development and analysis of a second-order nonlinear dynamic model for the inventory system. While the linear model (Task 1) provided baseline stability criteria, it failed to account for temperature-dependent spoilage and the inertial dynamics of the replenishment process. This task introduces these nonlinearities to investigate more complex behaviors, such as oscillations (Bullwhip Effect) and equilibrium shifts.
+Transport and Telecommunication Institute  
+Doctoral Faculty  
+Telematics and Logistics  
 
-### **2. Model Formulation**
+\vspace{18mm}
 
-To capture the realistic physics of perishable inventory, the system is modeled as a set of two coupled ordinary differential equations (ODEs).
+\begin{center}
+	extbf{SELF-STUDY ASSIGNMENT}\\
+\vspace{6mm}
+	extbf{Systems Theory}\\
+\vspace{10mm}
+{\Large \textbf{Nonlinear Dynamics and Chaos in Urban Logistics Inventory Systems}}\\
+\vspace{2mm}
+{\large An Empirical Analysis of FreshRetailNet-50K}\\
+\end{center}
 
-**2.1. Variable Definitions**
+\vspace{18mm}
 
-* : Current inventory level (State Variable 1).
-* : Rate of replenishment/supply (State Variable 2).
-* : Constant demand rate (Disturbance).
-* : Ambient temperature (Exogenous parameter).
+Student: Maksim Ilin (83835)  
+Group: 5402DTL  
 
-**2.2. Nonlinear Spoilage Function**
-Unlike the linear integrator, the inventory decays over time due to spoilage. The decay rate  is modeled as a function of temperature:
+\vfill
 
+\begin{center}
+Riga — 2026
+\end{center}
 
+\newpage
 
-*Where  is the base decay rate at 20°C, and  is the temperature sensitivity coefficient.*
+## Abstract
 
-**2.3. System Equations**
-The dynamics are governed by the following system:
+This report investigates the dynamic behavior of a perishable inventory system using high-frequency demand data from the FreshRetailNet-50K dataset. The work follows the assignment requirements in three parts: (1) a linear automatic control system (ACS) model of an inventory feedback loop (integrator + proportional controller) with a stability discussion and the effect of transport delay, (2) a nonlinear 2D ODE model with temperature-dependent spoilage and local equilibrium classification, and (3) empirical chaos diagnostics on a time series with more than 1000 samples.
 
-1. **Inventory Dynamics (Mass Balance with Decay):**
+For the chaos task, we analyze the "golden sample" hourly sales series (daytime window 08:00–22:00) and obtain $H \approx 0.59$ (persistent behavior) and $D_2 \approx 1.15$ (non-integer correlation dimension), consistent with low-dimensional complex dynamics under feedback, delays, and censoring due to stockouts.
 
+\newpage
 
-2. **Replenishment Dynamics (Second-Order Control):**
+## 1. Assignment Alignment and Research Object
 
+The research object is an urban logistics inventory replenishment system for perishable goods. We use FreshRetailNet-50K, a stockout-annotated censored demand dataset. The empirical indicator for Task 3 is the hourly sales series of the "golden sample" SKU/time window derived in the project pipeline.
 
+This report corresponds to the assignment specification in [docs/assignment.md](docs/assignment.md):
 
-*This equation models the supply chain inertia, where the replenishment rate  adjusts to the inventory error  with gain , but with a damping factor .*
+- Task 1: Linear ACS model, transfer functions, closed-loop transfer function, stability.
+- Task 2: Nonlinear ODE model (order \le 2), fixed point(s), Jacobian stability classification.
+- Task 3: Chaos/time-series metrics for $N\ge 1000$ (Hurst exponent and correlation dimension) and interpretation.
 
-### **3. Equilibrium Analysis**
+\newpage
 
-The fixed points (equilibrium states)  are found by setting the time derivatives to zero:  and .
+## 2. Task 1 — Linear Control System (ACS) Analysis
 
-Solving the algebraic system yields:
+### 2.1 Structural diagram
 
+The inventory system is modeled as a unity-feedback loop where the controller generates a replenishment signal based on the inventory error, and the plant integrates the net flow (replenishment minus demand). A transport lead time (delay) is optionally included.
 
-**Physical Interpretation:**
-The equilibrium inventory  is lower than  due to the "leakage" caused by spoilage () and demand (). The system requires a steady-state replenishment  that exceeds demand  exactly enough to cover the spoilage.
+![ACS structural diagram (inventory feedback loop)](docs/reports/figures/ilin_structural_diagram.png)
 
-### **4. Stability Analysis (Jacobian Method)**
+**Elements and interpretation**
 
-To classify the stability of the equilibrium, we analyze the Jacobian matrix  of the linearized system at :
+- **Reference** $I_{target}$: desired inventory level (setpoint).
+- **Error** $e(t)=I_{target}-I(t)$: deviation from target.
+- **Controller** $K_p$: proportional replenishment policy.
+- **Lead time / delay** $L$: transport delay in the supply chain.
+- **Plant / process**: inventory mass balance (integrator in linear approximation).
+- **Disturbance** $D(t)$: demand (hourly sales), subtracts inventory.
 
-The stability is determined by the eigenvalues  of characteristic equation :
+### 2.2 Element transfer functions
 
+We use the standard linear approximation for inventory dynamics:
 
-### **5. Numerical Results and Classification**
+$$
+I(s) = \frac{1}{s}\left(U(s) - D(s)\right).
+$$
 
-Using the configuration parameters derived from the *FreshRetailNet-50K* context (, , , ):
+Controller (proportional control):
 
-1. **Computed Equilibrium:**
-*  units.
-*  units/hour.
-* *Note: Even with a target of 100, the system settles at ~94.5 due to spoilage.*
+$$
+U(t)=K_p\left(I_{target}-I(t)\right).
+$$
 
+Optional transport delay $e^{-Ls}$ is approximated by first-order Padé:
 
-2. **Eigenvalues:**
-* 
+$$
+G_d(s) \approx \frac{1 - \frac{Ls}{2}}{1 + \frac{Ls}{2}}.
+$$
 
+### 2.3 Closed-loop transfer function and stability
 
-3. **Classification:**
-Since the eigenvalues are complex conjugates with a negative real part (), the equilibrium is classified as a **Stable Focus**.
+With unity feedback and an integrator plant, the reference-to-output closed-loop transfer function is:
 
-### **6. Conclusion**
+$$
+G_{cl}(s)=\frac{K_p}{s+K_p}.
+$$
 
-The nonlinear analysis reveals that the inventory system is locally stable but exhibits **damped oscillations** (Stable Focus).
+The characteristic equation is $s+K_p=0$ with pole $s=-K_p$. Therefore, the baseline system is stable for $K_p>0$.
 
-* **Significance:** This mathematically explains the "Bullwhip Effect" observed in supply chains: a disturbance in demand causes the replenishment rate and inventory to oscillate before settling.
-* **Comparison:** Unlike the Linear model (Task 1), which predicted simple exponential decay (Node), the 2nd-order nonlinear model correctly captures the oscillatory transient response inherent in systems with inertia and decay.
+**Effect of lead time.** Introducing delay increases phase lag and can destabilize the loop for sufficiently large $K_p$ and $L$. In the project implementation, a Padé approximation is used and the resulting poles indicate loss of stability in a scenario with significant delay (e.g., $L=2$ in model time units), consistent with the bullwhip effect under transportation/ordering latency.
 
-## **Task 3 Report: Empirical Chaos Theory Analysis**
+\newpage
 
-### **1. Introduction**
+## 3. Task 2 — Nonlinear Dynamic Model (2D ODE) and Local Analysis
 
-Following the identification of oscillatory behavior (Stable Focus) in the nonlinear model (Task 2), this task investigates the nature of these oscillations using empirical time series analysis. The objective is to determine whether the variability in the *FreshRetailNet-50K* inventory data is purely stochastic (random noise) or evidence of **deterministic chaos**.
+### 3.1 Model formulation
 
-To prove the existence of a **Strange Attractor**, we analyze the "Golden Sample" time series using phase space reconstruction and fractal geometry metrics.
+We extend the linear model by adding (i) inventory spoilage that depends on temperature and (ii) inertial dynamics for the replenishment rate.
 
-### **2. Methodology and Data Preparation**
+Temperature-dependent decay (spoilage) is modeled as:
 
-**2.1. Data Preprocessing**
-The analysis utilizes the hourly sales time series from the "Golden Sample".
+$$
+\delta(T)=k\cdot\left(1+\alpha_T\,(T-20)\right).
+$$
 
-* **Daytime Filtering:** To avoid mathematical degeneracy caused by overnight stockouts (long sequences of zeros), the analysis is restricted to the active daytime window (**08:00 – 22:00**).
-* **Sample Size:** The resulting dataset consists of  hourly observations, sufficient for low-dimensional chaos estimation.
+The 2D nonlinear system is:
 
-**2.2. Metrics**
-Two key invariants were computed to classify the system dynamics:
+$$
+\frac{dI}{dt}=R-D-\delta(T)\,I,
+\qquad
+\frac{dR}{dt}=a\,(I_{target}-I)-b\,R.
+$$
 
-1. **Hurst Exponent ():** Calculated via Rescaled Range (R/S) analysis to detect long-term memory.
-2. **Correlation Dimension ():** Estimated using the Grassberger-Procaccia algorithm to determine the fractal dimension of the attractor.
+Here $I$ is inventory, $R$ is replenishment rate, $D$ is (approximately) constant demand, $a$ is the replenishment gain, and $b$ is the replenishment damping/decay.
 
-### **3. Visual Analysis**
+### 3.2 Fixed point (equilibrium)
 
-**3.1. Time Series Dynamics**
-The raw time series exhibits quasi-periodic behavior driven by the daily cycle, but with significant irregularity in peak amplitudes and stockout events.
+Setting derivatives to zero yields an equilibrium $(I^*,R^*)$. For $I^*$ we use:
 
-**[INSERT FIGURE 1: Time Series Plot from HTML Report]**
-*Fig 1. Hourly sales dynamics showing irregular peaks and stockout events (red dots).*
+$$
+I^* = \frac{a\,I_{target}-b\,D}{a+b\,\delta(T)}.
+$$
 
-**3.2. Phase Space Reconstruction**
-Using the time-delay embedding method ( vs. ), we reconstruct the phase portrait. The trajectory does not form a closed loop (Limit Cycle) nor a scattered cloud (White Noise). Instead, it forms a structured "tangle" characteristic of a strange attractor.
+The steady replenishment is then $R^*=D+\delta(T)I^*$.
 
-**[INSERT FIGURE 2: Phase Portrait Plot from HTML Report]**
-*Fig 2. Phase space reconstruction () revealing a bounded but non-repeating trajectory.*
+### 3.3 Local stability (Jacobian and eigenvalues)
 
-### **4. Quantitative Results**
+The Jacobian matrix is:
 
-**4.1. Hurst Exponent ()**
-The R/S analysis yields a Hurst exponent of:
+$$
+J=\begin{bmatrix}
+-\delta(T) & 1 \\
+-a & -b
+\end{bmatrix}.
+$$
 
+The equilibrium type is determined from the eigenvalues of $J$. In the project parameter regime, the eigenvalues are complex with negative real part, e.g.:
 
-**Interpretation:**
-Since , the process is **persistent**. The system has "memory": high values are likely to be followed by high values. This rules out the hypothesis of a purely Random Walk () or Mean Reversion (), confirming the influence of feedback loops identified in Task 1.
+$$
+\lambda_{1,2}\approx -0.255\pm 0.970i,
+$$
 
-**[INSERT FIGURE 3: Hurst Log-Log Plot from HTML Report]**
-*Fig 3. Rescaled Range (R/S) scaling showing persistence ().*
+which corresponds to a **stable focus** (damped oscillations). This matches the qualitative behavior typically associated with bullwhip-like oscillations: inventory and replenishment oscillate transiently and then settle.
 
-**4.2. Correlation Dimension ()**
-The correlation sum  exhibits a clear scaling region with a slope of:
+\newpage
 
+## 4. Task 3 — Chaos Theory and Time Series Analysis
 
-**Interpretation:**
+### 4.1 Data and indicator
 
-* **:** The system is not a fixed point.
-* ** is fractional:** This is the definitive signature of a **fractal geometry**.
-* **:** The dynamics cannot be described by a simple 1D curve (Limit Cycle). The attractor has a "thickness" in phase space.
+We analyze the "golden sample" hourly sales time series derived from FreshRetailNet-50K. The full hourly series exceeds 1000 samples (90 days × 24 hours = 2160). To reduce estimator degeneracy due to long overnight zero runs (stockouts/low demand), we restrict the analysis to daytime hours **08:00–22:00**.
 
-**[INSERT FIGURE 4: Correlation Dimension Plot from HTML Report]**
-*Fig 4. Correlation Sum scaling indicating a fractional dimension .*
+### 4.2 Methods
 
-### **5. Discussion**
+**Phase space reconstruction (2D embedding):**
 
-The combination of a fractional dimension () and system memory () confirms that the inventory system operates in a regime of **low-dimensional deterministic chaos**.
+$$
+\mathbf{x}(t)=[x(t),\,x(t+\tau)].
+$$
 
-This empirical finding validates the theoretical predictions from Task 1 and Task 2:
+**Hurst exponent (R/S):**
 
-1. **Instability:** The sensitivity to delays (Task 1) pushes the system away from a stable equilibrium.
-2. **Nonlinearity:** The spoilage and constraints (Task 2) fold the trajectory back, preventing explosion.
-3. **Chaos:** The interaction of these forces creates a **Strange Attractor**, where the state is bounded but never exactly repeats.
+$$
+\mathbb{E}\left[\frac{R(n)}{S(n)}\right]=C\,n^H,
+\qquad
+\log(R/S)\approx H\,\log(n)+\text{const}.
+$$
 
-### **6. Conclusion**
+**Correlation dimension ($D_2$):**
 
-The research successfully identifies the underlying physics of the *FreshRetailNet-50K* system. It is not driven by random external noise, but by internal chaotic dynamics resulting from the interplay of replenishment delays and inventory constraints. This implies that traditional linear forecasting methods will degrade over time (due to the Butterfly Effect), and control strategies must account for the system's fractal nature.
+$$
+C(r)=\frac{2}{N(N-1)}\sum_{i<j}\Theta\bigl(r-\|\mathbf{x}_i-\mathbf{x}_j\|\bigr),
+\qquad
+C(r)\sim r^{D_2},
+\qquad
+D_2=\lim_{r\to 0}\frac{\log C(r)}{\log r}.
+$$
+
+### 4.3 Visual diagnostics
+
+![Hourly sales time series with stockout markers](docs/reports/figures/task3_time_series.png)
+
+![Phase portrait (2D embedding, delay $\tau=1$)](docs/reports/figures/task3_phase_portrait.png)
+
+![Hurst exponent estimation (R/S log-log fit)](docs/reports/figures/task3_hurst_rs.png)
+
+![Correlation dimension estimation ($D_2$ log-log fit)](docs/reports/figures/task3_correlation_dimension.png)
+
+### 4.4 Results and interpretation
+
+The computed invariants for the daytime hourly series are:
+
+- Hurst exponent: $H\approx 0.59$.
+- Correlation dimension: $D_2\approx 1.15$.
+
+**Interpretation.** Since $H>0.5$, the process is persistent (long-memory behavior), which is compatible with feedback-driven dynamics rather than a pure random walk. The non-integer value $D_2\approx 1.15$ indicates a low-dimensional geometric structure in reconstructed phase space, which is consistent with complex deterministic dynamics (potentially chaotic) rather than a purely stochastic cloud. Given the strong seasonality and the censoring introduced by stockouts, these results should be interpreted cautiously; however, together they support the hypothesis of bounded, non-trivial dynamics under supply-chain feedback.
+
+For interactive versions of these plots, see [docs/reports/task3_chaos_report.html](docs/reports/task3_chaos_report.html).
+
+\newpage
+
+## 5. Conclusion
+
+This work demonstrates a coherent systems-theory analysis of an inventory replenishment system using both theory-driven models and empirical diagnostics. The linear ACS formulation provides a baseline stability condition and shows how delays can destabilize the loop. The nonlinear 2D model introduces spoilage and inertia and yields a stable-focus equilibrium consistent with damped oscillations. Finally, the empirical time-series analysis on a long hourly sequence yields a persistent Hurst exponent and a non-integer correlation dimension, suggesting low-dimensional complex behavior influenced by feedback, delays, and stockout censoring.
+
+\newpage
 
 ## References
 
@@ -271,79 +239,3 @@ Ilin, M. (2026). *Systems Theory Task: Analysis of Nonlinear Dynamics and Chaos 
 Sterman, J.D. (2000). *Business Dynamics: Systems Thinking and Modeling for a Complex World*. Boston: Irwin/McGraw-Hill.
 
 Strogatz, S.H. (2015). *Nonlinear Dynamics and Chaos: With Applications to Physics, Biology, Chemistry, and Engineering*. 2nd edn. Boulder, CO: Westview Press.
-
-## ANNEX for Assistant
-
-### LaTeX instructions
-
-**Наши формулы для вставки (LaTeX) в отчет по заданию 1:**
-
-* **Интегратор:**
-`I(s) = \frac{1}{s}\left(U(s) - D(s)\right)`
-* **Контроллер:**
-`U(t) = K_p\left(I_{target} - I(t)\right)`
-* **Задержка (Паде):**
-`G_d(s) \approx \frac{1 - \frac{Ls}{2}}{1 + \frac{Ls}{2}}`
-* **Замкнутый контур:**
-`G_{cl}(s) = \frac{K_p}{s + K_p}`
-
-
-**Для части 2 этого отчета используйте следующие LaTeX-коды:**
-
-* **Функция распада:**
-`\delta(T) = k \cdot (1 + \alpha_T (T - 20))`
-* **Система уравнений:**
-`\frac{dI}{dt} = R - D - \delta(T) \cdot I`
-`\frac{dR}{dt} = a(I_{target} - I) - b \cdot R`
-* **Точка равновесия:**
-`I^* = \frac{a \cdot I_{target} - b \cdot D}{a + b \cdot \delta(T)}`
-* **Матрица Якоби:**
-`J = \begin{bmatrix} -\delta(T) & 1 \\ -a & -b \end{bmatrix}`
-* **Собственные числа:**
-`\lambda_{1,2} \approx -0.255 \pm 0.970i`
-
-1. Реконструкция фазового пространства (Methodology)
-
-Для описания того, как мы строили фазовый портрет (Embedding):
-
-* **Вектор состояния (для 2D, как в нашем случае):**
-`\mathbf{x}(t) = [x(t), x(t + \tau)]`
-* **В общем виде (если нужно):**
-`\mathbf{x}_i = [x_i, x_{i+\tau}, \dots, x_{i+(m-1)\tau}]`
-
-2. Показатель Херста (Hurst Exponent)
-
-Для раздела **4.1**, описывающего R/S анализ:
-
-* **Основное соотношение (Power Law):**
-`E\left[\frac{R(n)}{S(n)}\right] = C \cdot n^H`
-* **Логарифмическая форма (линейная регрессия):**
-`\log(R/S) \approx H \cdot \log(n) + \text{const}`
-
-3. Корреляционная размерность ()
-
-Для раздела **4.2**, описывающего алгоритм Грассбергера-Прокаччиа:
-
-* **Корреляционная сумма (Correlation Sum):**
-`C(r) = \frac{2}{N(N-1)} \sum_{i<j} \Theta(r - \|\mathbf{x}_i - \mathbf{x}_j\|)`
-*(где  — функция Хевисайда, считающая пары точек ближе, чем )*
-* **Закон скейлинга (Scaling Law):**
-`C(r) \sim r^{D_2}`
-* **Определение размерности:**
-`D_2 = \lim_{r \to 0} \frac{\log C(r)}{\log r}`
-
----
-
-**Совет:**
-В разделе **Results** для конкретных значений лучше использовать простой текст с математическими символами (как в моем черновике отчета), так как там важны числа:
-`H \approx 0.586`
-`D_2 \approx 1.145`
-
-А вот в разделе **Methodology**, где вы объясняете *суть метода*, эти формулы будут смотреться очень солидно и повысят академический вес работы.
-
-### Как вставить графики:
-
-1. Откройте ваш HTML-файл `docs/reports/task3_chaos_report.html` в браузере.
-2. В каждом графике (Plotly) в правом верхнем углу есть иконка фотоаппарата **"Download plot as a png"**.
-3. Нажмите на нее для каждого из 4 графиков.
-4. Вставьте скачанные PNG файлы в Google Doc на места `[INSERT FIGURE X]`.

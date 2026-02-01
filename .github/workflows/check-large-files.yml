@@ -1,0 +1,19 @@
+name: Check for large files
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  large-files-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Run large-files check
+        run: |
+          python scripts/check_large_files.py

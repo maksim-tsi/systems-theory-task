@@ -1,0 +1,33 @@
+name: CI (conda tsi)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Miniconda and create `tsi` environment
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: environment.yml
+          activate-environment: tsi
+          python-version: '3.11'
+          auto-update-conda: true
+
+      - name: Verify Python and conda env
+        run: |
+          python -V
+          python -c "import sys, os; print(sys.executable); print('CONDA_DEFAULT_ENV=' + str(os.environ.get('CONDA_DEFAULT_ENV')) )"
+
+      - name: Run large-files check
+        run: python scripts/check_large_files.py
+
+      - name: Run tests
+        run: pytest -q

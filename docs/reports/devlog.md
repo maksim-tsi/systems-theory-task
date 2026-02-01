@@ -132,3 +132,8 @@ Task: Implemented chaos metrics (Task 3) core estimators.
 Decisions made:
 - Replaced stub chaos tests with Hurst R/S expectations for white noise, persistent trend, and anti-persistent AR(1) series in tests/test_chaos.py.
 - Implemented Hurst R/S estimator and correlation dimension (nolds if available, GP fallback) in src/chaos_metrics.py.
+
+Task: Added daytime filtering and daily aggregation helpers.
+
+Decisions made:
+- Added filter_daytime_hours and aggregate_daily utilities to src/preprocessing.py with tests in tests/test_preprocessing.py.

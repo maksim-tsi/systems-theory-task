@@ -33,7 +33,7 @@
 **You must strictly follow this cycle for every task:**
 1.  **Understand:** Analyze the requirement.
 2.  **Test First:** Create `tests/test_MODULE.py`.
-    - **Unit Tests:** MUST mock external calls (especially HuggingFace streaming) to be fast and offline-capable.
+    - **Unit Tests:** MUST mock external calls (especially HuggingFace dataset download) to be fast and offline-capable.
     - **Integration Tests:** (Optional) Can hit real APIs but must be marked explicitly (e.g., `@pytest.mark.integration`) and are not run by default in CI.
 3.  **Fail:** Verify failure.
 4.  **Implement:** Write code in `src/MODULE.py`.
@@ -41,19 +41,17 @@
 
 ## 4. Documentation Strategy (Strict)
 - **DevLog (`docs/reports/devlog.md`):** This is the Source of Truth. **MUST UPDATE** after every significant task. Log decisions, problems, and next steps.
+- **Lessons Learned (`docs/lessons_learned.md`):** Maintain high-level lessons to avoid repeating mistakes; read at the start of new modeling/preprocessing tasks.
+- **Analysis Artifacts (`docs/reports/artifacts/YYYY-MM-DD/`):** Store intermediate analysis outputs (txt/csv/json) in dated folders and link them from the corresponding report.
 - **Directory READMEs:** Explain content of `src/`, `data/`, etc.
 - **Standards:** Follow guidelines in `docs/guidelines/documentation.md`.
 
 ## 5. Domain Context: FreshRetailNet-50K Analysis
 - **Data Source:** `Dingdong-Inc/FreshRetailNet-50K` (Parquet).
-- **Streaming Strategy (Critical Architectural Decision):**
-    - The dataset is large. Use `load_dataset(..., streaming=True)`.
-    - **Constraint:** Analytical modules (ODE, Chaos) require dense in-memory arrays (NumPy), not iterators.
-    - **Pattern:** `src/data_loader.py` acts as an **ETL Filter**.
-        1.  Stream raw data.
-        2.  Iterate and filter for a specific Target SKU/Store.
-        3.  **Materialize** this subset into a Pandas DataFrame and save locally (e.g., `data/processed_sample.parquet`).
-    - **Downstream:** Modules `src/nonlinear_model.py` and `src/chaos_metrics.py` must accept **Pandas DataFrames** as input, NOT HuggingFace datasets.
+- **Strategy:** The dataset is small enough (~106MB) to load entirely into memory.
+    - **Action:** Download the full `train` split.
+    - **Pattern:** `src/data_loader.py` should download the dataset, convert it to a pandas DataFrame, and then apply filtering logic to select the best time series.
+    - **Optimization:** Use `pandas` vectorized operations for filtering and finding the best SKU (highest volume + stockouts).
 - **Data Structure:** Raw data has nested lists (`hours_sale`). You must **explode** these into a flat hourly time-series.
 - **Stockouts:** Explicitly handle `is_stockout` flags (`0` = censored/stockout).
 

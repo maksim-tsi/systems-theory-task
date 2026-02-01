@@ -1,0 +1,76 @@
+SUMMARY
+rows: 2160
+columns: ['dt', 'price', 'temp', 'hour_index', 'sales', 'is_stockout', 'time_step']
+unique_days: 90
+min_dt: 2024-03-28
+max_dt: 2024-06-25
+hours_per_day_min: 24
+hours_per_day_max: 24
+total_sales: 1643.8999999999999
+avg_hourly_sales: 0.7610648148148148
+median_hourly_sales: 0.0
+avg_daily_sales: 18.265555555555558
+median_daily_sales: 19.5
+stockout_rate: 0.5842592592592593
+total_stockout_hours: 1262
+price_mean: 1.0
+price_min: 1.0
+price_max: 1.0
+temp_mean: 22.394111111111112
+temp_min: 15.51
+temp_max: 27.76
+daily_sales_std: 12.061966980584018
+daily_sales_min: 3.0
+daily_sales_max: 40.0
+HOURLY_MEAN_SALES
+hour_index
+0     0.0311
+1     0.0122
+2     0.0067
+3     0.0011
+4     0.0156
+5     0.1811
+6     0.9211
+7     1.8667
+8     2.0600
+9     2.1211
+10    1.8956
+11    1.3800
+12    1.1411
+13    1.0456
+14    1.1022
+15    1.2667
+16    1.2300
+17    0.7244
+18    0.4656
+19    0.3222
+20    0.3189
+21    0.0833
+22    0.0456
+23    0.0278
+HOURLY_STOCKOUT_RATE
+hour_index
+0     0.9111
+1     0.9222
+2     0.9333
+3     0.9333
+4     0.8889
+5     0.7333
+6     0.0556
+7     0.0000
+8     0.1667
+9     0.3333
+10    0.3333
+11    0.3444
+12    0.3444
+13    0.3667
+14    0.4000
+15    0.4667
+16    0.5333
+17    0.6000
+18    0.6667
+19    0.7000
+20    0.7778
+21    0.8444
+22    0.8778
+23    0.8889

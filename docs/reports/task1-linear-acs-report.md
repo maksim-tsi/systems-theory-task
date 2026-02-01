@@ -74,10 +74,11 @@ Therefore, any positive proportional gain yields a stable first-order closed-loo
 ## 6. Computed Results (from code)
 Using the current configuration ($K_p = 1.0$):
 
-- Closed-loop transfer function: $G_{cl}(s) = \frac{1}{s + 1}$
-- Characteristic equation: $s + 1 = 0$
-- Closed-loop pole: $s = -1$
-- Stability: stable (all poles have negative real parts)
+- Reference tracking (no delay): $G_{cl}(s) = \frac{1}{s + 1}$ with pole $s=-1$ (stable).
+- Disturbance response (no delay): $G_{DI}(s) = -\frac{1}{s + 1}$ with pole $s=-1$ (stable).
+- Lead time scenario ($L=2$, Padé 1st order):
+	- $G_{cl}(s) = \frac{s-1}{s^2 + 2s - 1}$
+	- Poles: $s \approx -2.414,\; 0.414$ (unstable due to positive pole)
 
 See the recorded outputs in [docs/reports/artifacts/2026-02-01/linear_control_analysis.txt](docs/reports/artifacts/2026-02-01/linear_control_analysis.txt).
 

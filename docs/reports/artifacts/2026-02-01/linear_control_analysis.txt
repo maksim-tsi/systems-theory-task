@@ -1,18 +1,22 @@
-Linear Control System (ACS) - Computed Quantities
-=
-Kp = 1.0
-I_target = 1.0
+Linear ACS Analysis (with delay + disturbance)
+Parameters:
+  Kp = 1.0
+  Delay L = 0.0 and 2.0 (Padé 1st order)
 
-Process: I(s) = (1/s) * (U(s) - D(s))
-Controller: U(t) = Kp * (I_target - I(t))
+G_cl(s) = I/I_target (L=0)
+  num: [1.]
+  den: [1. 1.]
+  poles: [-1.]
+  stable: True
 
-Closed-loop transfer function (from I_target to I):
-  G_cl(s) = Kp / (s + Kp)
-  Numerator: [1.]
-  Denominator: [1. 1.]
+G_DI(s) = I/D (L=0)
+  num: [-1.]
+  den: [1. 1.]
+  poles: [-1.]
+  stable: True
 
-Characteristic equation: s + Kp = 0
-Closed-loop poles:
-  -1.0
-
-Stability (all poles real parts < 0): True
+G_cl(s) = I/I_target (L=2)
+  num: [ 1. -1.]
+  den: [ 1.  2. -1.]
+  poles: [-2.41421356  0.41421356]
+  stable: False

@@ -111,3 +111,10 @@ Decisions made:
 - Added lead-time (Padé) delay support and explicit disturbance transfer function in src/linear_model.py.
 - Added tests for delay order increase and disturbance transfer behavior in tests/test_models.py.
 - Updated Task 1 report with SCM interpretation, delay element, and demand-rejection transfer function.
+
+Task: Revalidated linear ACS results after delay updates.
+
+Decisions made:
+- Ran pytest tests/ (all passing).
+- Regenerated linear ACS analysis artifact with disturbance and delay scenarios.
+- Updated Task 1 report computed results to reflect new artifact values.

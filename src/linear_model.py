@@ -13,6 +13,21 @@ except Exception:  # pragma: no cover - absent scipy
     pade = None
 
 
+class _MinimalTransferFunction:
+    """Minimal transfer function container when scipy is unavailable."""
+
+    def __init__(self, num: np.ndarray, den: np.ndarray) -> None:
+        self.num = np.asarray(num, dtype=float)
+        self.den = np.asarray(den, dtype=float)
+
+
+def _pade_first_order(delay: float) -> Tuple[np.ndarray, np.ndarray]:
+    """First-order Padé approximation for e^{-Ls}."""
+    if delay <= 0.0:
+        return np.array([1.0]), np.array([1.0])
+    return np.array([1.0, -0.5 * delay]), np.array([1.0, 0.5 * delay])
+
+
 def build_acs_transfer_function(integrator_gain: float = 1.0, delay: float = 0.0):
     """Construct a simple ACS transfer function representing inventory as integrator.
 
@@ -25,10 +40,12 @@ def build_acs_transfer_function(integrator_gain: float = 1.0, delay: float = 0.0
     """
     # Continuous-time integrator G(s) = K / s
     if TransferFunction is object:
-        # Fallback: return tuple zeros/poles
-        return (np.array([integrator_gain]), np.array([1.0, 0.0]))
-    if delay > 0.0 and pade is not None:
-        num_d, den_d = pade(delay, 1)
+        num_d, den_d = _pade_first_order(delay)
+        num = np.polymul([integrator_gain], num_d)
+        den = np.polymul([1.0, 0.0], den_d)
+        return _MinimalTransferFunction(num, den)
+    if delay > 0.0:
+        num_d, den_d = pade(delay, 1) if pade is not None else _pade_first_order(delay)
         num = np.polymul([integrator_gain], np.asarray(num_d, dtype=float))
         den = np.polymul([1.0, 0.0], np.asarray(den_d, dtype=float))
         return TransferFunction(num, den)
@@ -47,6 +64,19 @@ def _tf_add(num_a: np.ndarray, den_a: np.ndarray, num_b: np.ndarray, den_b: np.n
     num = np.polyadd(np.polymul(num_a, den_b), np.polymul(num_b, den_a))
     den = np.polymul(den_a, den_b)
     return num, den
+
+
+def _cancel_common_trailing_zeros(num: np.ndarray, den: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """Cancel common factors of s when both num and den have trailing zeros."""
+    num_out = np.asarray(num, dtype=float)
+    den_out = np.asarray(den, dtype=float)
+    while len(num_out) > 1 and len(den_out) > 1:
+        if np.isclose(num_out[-1], 0.0) and np.isclose(den_out[-1], 0.0):
+            num_out = num_out[:-1]
+            den_out = den_out[:-1]
+        else:
+            break
+    return num_out, den_out
 
 
 class InventoryControlSystem:
@@ -69,8 +99,8 @@ class InventoryControlSystem:
 
     def _delay_polynomials(self) -> Tuple[np.ndarray, np.ndarray]:
         if self.delay > 0.0:
-            if pade is None or TransferFunction is object:
-                raise RuntimeError("Delay modeling requires scipy.signal.pade.")
+            if pade is None:
+                return _pade_first_order(self.delay)
             num_d, den_d = pade(self.delay, 1)
             return np.asarray(num_d, dtype=float), np.asarray(den_d, dtype=float)
         return np.array([1.0]), np.array([1.0])
@@ -89,26 +119,25 @@ class InventoryControlSystem:
 
     def _closed_loop_tf(self):
         """Build closed-loop transfer function from I_target to I."""
-        if TransferFunction is object:
-            raise RuntimeError("scipy.signal.TransferFunction is required for transfer functions.")
         return self.transfer_function_reference()
 
     def transfer_function_reference(self):
         """Closed-loop transfer function from I_target to I."""
-        if TransferFunction is object:
-            raise RuntimeError("scipy.signal.TransferFunction is required for transfer functions.")
         num_L, den_L, _, _ = self._open_loop_polynomials()
         den_cl = np.polyadd(den_L, num_L)
+        if TransferFunction is object:
+            return _MinimalTransferFunction(num_L, den_cl)
         return TransferFunction(num_L, den_cl)
 
     def transfer_function_disturbance(self):
         """Closed-loop transfer function from demand disturbance D to inventory I."""
-        if TransferFunction is object:
-            raise RuntimeError("scipy.signal.TransferFunction is required for transfer functions.")
         num_L, den_L, num_p, den_p = self._open_loop_polynomials()
         den_cl = np.polyadd(den_L, num_L)
         num_dist = -np.polymul(num_p, den_L)
         den_dist = np.polymul(den_p, den_cl)
+        num_dist, den_dist = _cancel_common_trailing_zeros(num_dist, den_dist)
+        if TransferFunction is object:
+            return _MinimalTransferFunction(num_dist, den_dist)
         return TransferFunction(num_dist, den_dist)
 
     def simulate_step_response(

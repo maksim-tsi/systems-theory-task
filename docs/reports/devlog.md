@@ -29,3 +29,12 @@ Updates:
 
 Next steps:
 - Execute the plan starting with data loading/preprocessing TDD.
+
+Task: Implemented data-loader enhancements for golden sample selection.
+
+Decisions made:
+- Added streaming hourly expansion, dtype normalization, heuristic scan-and-select, and materialization to parquet in src/data_loader.py.
+- Added tests covering hourly streaming, heuristic selection, and materialization in tests/test_data_loader.py.
+
+Next steps:
+- Run pytest tests/ and adjust based on failures.

@@ -2,6 +2,7 @@
 
 This directory contains the core logic modules for the `systems-theory-task` project. 
 The architecture follows a modular, script-based approach (no notebooks for logic) with strict type hinting and Google-style docstrings.
+Intermediate analysis artifacts should be saved under docs/reports/artifacts/YYYY-MM-DD/ and linked from the relevant report.
 
 ## Module Overview
 

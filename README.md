@@ -4,7 +4,7 @@
 ## Project Overview
 This repository hosts the computational implementation of the "Systems Theory" doctoral assignment. 
 
-**Methodology:** We utilize a **Script-Based Modular Architecture** rather than Jupyter Notebooks to ensure code robustness, reproducibility, and effective collaboration with AI coding assistants (GitHub Copilot). All development follows a strict **Test-Driven Development (TDD)** cycle.
+**Methodology:** We utilize a **Script-Based Modular Architecture** rather than Jupyter Notebooks to ensure code robustness, reproducibility, and effective collaboration with AI coding assistants (GitHub Copilot). All development follows a strict **Test-Driven Development (TDD)** cycle. Intermediate analysis artifacts are stored under `docs/reports/artifacts/YYYY-MM-DD/` and linked from reports.
 
 **Objective:** Apply rigorous mathematical modeling to real-world Supply Chain Management data (Control Theory, Differential Equations, Chaos Theory).
 
@@ -31,7 +31,7 @@ systems-theory-task/
 │   └── params.yaml         # Parameters for ODEs, Control Theory, etc.
 ├── src/                    # Core Logic (Max ~200 loc per file)
 │   ├── __init__.py
-│   ├── data_loader.py      # HuggingFace streaming & filtering
+│   ├── data_loader.py      # Full dataset download & filtering
 │   ├── preprocessing.py    # Explode lists, imputation, smoothing
 │   ├── linear_model.py     # ACS Transfer Functions logic
 │   ├── nonlinear_model.py  # ODE solvers (scipy.integrate)
@@ -44,6 +44,9 @@ systems-theory-task/
 │   ├── test_models.py
 │   └── test_chaos.py
 ├── main.py                 # CLI Entry point to run pipeline
+├── docs/
+│   └── reports/
+│       └── artifacts/      # Dated analysis artifacts (txt/csv/json)
 ├── environment.yml         # Conda env export
 ├── agents.md               # Instructions for Copilot
 └── README.md               # Project documentation

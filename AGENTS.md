@@ -42,6 +42,7 @@
 ## 4. Documentation Strategy (Strict)
 - **DevLog (`docs/reports/devlog.md`):** This is the Source of Truth. **MUST UPDATE** after every significant task. Log decisions, problems, and next steps.
 - **Lessons Learned (`docs/lessons_learned.md`):** Maintain high-level lessons to avoid repeating mistakes; read at the start of new modeling/preprocessing tasks.
+- **Analysis Artifacts (`docs/reports/artifacts/YYYY-MM-DD/`):** Store intermediate analysis outputs (txt/csv/json) in dated folders and link them from the corresponding report.
 - **Directory READMEs:** Explain content of `src/`, `data/`, etc.
 - **Standards:** Follow guidelines in `docs/guidelines/documentation.md`.
 

@@ -71,3 +71,15 @@ Task: Fixed stockout interpretation and price normalization.
 Decisions made:
 - Updated src/data_loader.py to treat stock_status 0 as available and >0 as stockout.
 - Normalized price from discount using price = 1.0 - discount (fallback to 0.0 if discount >= 1.0).
+
+Task: Updated golden sample analysis report (post-fix).
+
+Decisions made:
+- Recomputed summary stats for data/golden_sample.parquet and saved intermediate results in docs/reports/tmp/golden_sample_stats.txt.
+- Overwrote docs/reports/golden-sample-analysis.md with corrected stockout and price findings.
+
+Task: Standardized analysis artifact storage.
+
+Decisions made:
+- Moved golden sample stats to docs/reports/artifacts/2026-02-01/ and updated report links.
+- Added artifact storage guidance to AGENTS.md, .github/copilot-instructions.md, and README files.

@@ -25,6 +25,7 @@
 - Large file policy: do not commit artifacts >100MB; data outputs go under data/ (git-ignored). Enforced by scripts/check_large_files.py.
 - Config values live in config/params.yaml (ODE/control parameters).
 - Documentation: update docs/reports/devlog.md after significant tasks; follow docs/guidelines/documentation.md.
+- Lessons learned: maintain docs/lessons_learned.md with high-level lessons; read it before new modeling/preprocessing work.
 
 ## TDD expectations
 - Tests live in tests/ (e.g., test_data_loader.py, test_preprocessing.py, test_models.py, test_chaos.py).

@@ -130,9 +130,10 @@ def explode_and_save(
     iterator = tqdm(subset.iterrows(), total=len(subset), desc="      Exploding hourly data")
     
     for _, row in iterator:
+        disc = float(row.get('discount', 0.0))
         base = {
             "dt": row['dt'],
-            "price": row.get('discount', 1.0),
+            "price": 1.0 - disc if disc < 1.0 else 0.0,
             "temp": row.get('avg_temperature', 0.0)
         }
         sales = row['hours_sale']
@@ -146,8 +147,8 @@ def explode_and_save(
             r = base.copy()
             r['hour_index'] = h
             r['sales'] = float(sales[h])
-            # 0 = Stockout, 1 = Available. Invert for "is_stockout" flag (1=True)
-            r['is_stockout'] = 1 if stock[h] == 0 else 0
+            # Based on validation: 0 = Available, >0 = Stockout
+            r['is_stockout'] = 1 if stock[h] != 0 else 0
             records.append(r)
             
     flat_df = pd.DataFrame(records)

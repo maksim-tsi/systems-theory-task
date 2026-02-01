@@ -65,3 +65,9 @@ Task: Golden sample analysis report.
 
 Decisions made:
 - Computed descriptive statistics and hourly profiles from data/golden_sample.parquet and saved findings in docs/reports/golden-sample-analysis.md.
+
+Task: Fixed stockout interpretation and price normalization.
+
+Decisions made:
+- Updated src/data_loader.py to treat stock_status 0 as available and >0 as stockout.
+- Normalized price from discount using price = 1.0 - discount (fallback to 0.0 if discount >= 1.0).

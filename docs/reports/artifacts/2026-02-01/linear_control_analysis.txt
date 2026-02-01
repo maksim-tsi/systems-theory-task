@@ -1,0 +1,22 @@
+Linear ACS Analysis (with delay + disturbance)
+Parameters:
+  Kp = 1.0
+  Delay L = 0.0 and 2.0 (Padé 1st order)
+
+G_cl(s) = I/I_target (L=0)
+  num: [1.]
+  den: [1. 1.]
+  poles: [-1.]
+  stable: True
+
+G_DI(s) = I/D (L=0)
+  num: [-1.]
+  den: [1. 1.]
+  poles: [-1.]
+  stable: True
+
+G_cl(s) = I/I_target (L=2)
+  num: [ 1. -1.]
+  den: [ 1.  2. -1.]
+  poles: [-2.41421356  0.41421356]
+  stable: False

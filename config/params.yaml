@@ -2,7 +2,13 @@
 ode:
   inventory_decay_rate: 0.01  # spoilage per hour
   temperature_sensitivity: 0.001
+  temperature: 20.0
+  demand: 10.0
+  replenishment_gain: 1.0
+  replenishment_decay: 0.5
+  i_target: 100.0
   initial_inventory: 100.0
+  initial_replenishment: 10.0
 linear_model:
   integrator_gain: 1.0
   delay: 0.5

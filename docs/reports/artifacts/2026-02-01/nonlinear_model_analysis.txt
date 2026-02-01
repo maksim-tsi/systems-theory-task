@@ -1,0 +1,17 @@
+Nonlinear Model Analysis (2D inventory-replenishment)
+Parameters:
+  inventory_decay_rate: 0.01
+  temperature_sensitivity: 0.001
+  temperature: 20.0
+  demand: 10.0
+  replenishment_gain: 1.0
+  replenishment_decay: 0.5
+  i_target: 100.0
+
+Equilibrium (I*, R*):
+  [94.52736318 10.94527363]
+
+Jacobian eigenvalues:
+  [-0.255+0.96952308j -0.255-0.96952308j]
+Type: focus
+Stable: True

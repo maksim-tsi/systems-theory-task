@@ -1,4 +1,4 @@
-name: CI (conda tsi)
+name: CI
 
 on:
   push:
@@ -13,18 +13,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Miniconda and create `tsi` environment
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          environment-file: environment.yml
-          activate-environment: tsi
           python-version: '3.11'
-          auto-update-conda: true
 
-      - name: Verify Python and conda env
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scipy statsmodels plotly pytest datasets nolds hurst
+
+      - name: Verify Python
         run: |
           python -V
-          python -c "import sys, os; print(sys.executable); print('CONDA_DEFAULT_ENV=' + str(os.environ.get('CONDA_DEFAULT_ENV')) )"
+          python -c "import sys; print(sys.executable)"
 
       - name: Run large-files check
         run: python scripts/check_large_files.py

@@ -7,7 +7,7 @@
 - **Interpreter:** Python 3.11 (located at `/Users/max/miniconda3/envs/tsi/bin/python`).
 - **Environment:** All commands must run within `conda activate tsi`.
 - **MANDATORY ACTIVATION:** You must verify that the `tsi` environment is active before running any tests (`pytest`) or scripts (`python`).
-- **CI/CD Context:** In Continuous Integration, the environment is created fresh from `environment.yml`. Do not rely on local absolute paths in CI scripts.
+- **CI/CD Context:** CI uses `actions/setup-python` with `pip` installs (no conda). Do not rely on local absolute paths in CI scripts.
 - **Available Libraries:**
     - `scipy` (1.14.1), `statsmodels` (0.14.5) for mathematical modeling and ODEs.
     - `pandas` (2.2.3), `numpy` (2.1.3) for data manipulation.

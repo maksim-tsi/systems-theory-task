@@ -83,3 +83,94 @@ Task: Standardized analysis artifact storage.
 Decisions made:
 - Moved golden sample stats to docs/reports/artifacts/2026-02-01/ and updated report links.
 - Added artifact storage guidance to AGENTS.md, .github/copilot-instructions.md, and README files.
+
+Task: Removed conda from CI.
+
+Decisions made:
+- Replaced conda-based CI workflow with actions/setup-python and pip installs.
+- Updated AGENTS.md and copilot instructions to reflect non-conda CI.
+
+Task: Implemented linear inventory control system.
+
+Decisions made:
+- Added `InventoryControlSystem` with proportional control, step response simulation, and closed-loop stability analysis in src/linear_model.py.
+
+Task: Generated linear ACS analysis artifact.
+
+Decisions made:
+- Saved computed transfer function and stability results to docs/reports/artifacts/2026-02-01/linear_control_analysis.txt.
+
+Task: Drafted Task 1 linear ACS report.
+
+Decisions made:
+- Added report with derived transfer functions, stability analysis, and recommendations in docs/reports/task1-linear-acs-report.md.
+
+Task: Extended linear ACS model with delay and disturbance response.
+
+Decisions made:
+- Added lead-time (Padé) delay support and explicit disturbance transfer function in src/linear_model.py.
+- Added tests for delay order increase and disturbance transfer behavior in tests/test_models.py.
+- Updated Task 1 report with SCM interpretation, delay element, and demand-rejection transfer function.
+
+Task: Revalidated linear ACS results after delay updates.
+
+Decisions made:
+- Ran pytest tests/ (all passing).
+- Regenerated linear ACS analysis artifact with disturbance and delay scenarios.
+- Updated Task 1 report computed results to reflect new artifact values.
+
+Task: Implemented nonlinear model (Task 2) with equilibrium analysis.
+
+Decisions made:
+- Added 2D inventory–replenishment ODE with temperature-dependent decay, equilibrium solver, Jacobian, and stability classification in src/nonlinear_model.py.
+- Added TDD coverage for equilibrium and classification in tests/test_models.py.
+- Extended config parameters for nonlinear model in config/params.yaml.
+- Generated nonlinear model analysis artifact and created Task 2 report.
+
+Task: Implemented chaos metrics (Task 3) core estimators.
+
+Decisions made:
+- Replaced stub chaos tests with Hurst R/S expectations for white noise, persistent trend, and anti-persistent AR(1) series in tests/test_chaos.py.
+- Implemented Hurst R/S estimator and correlation dimension (nolds if available, GP fallback) in src/chaos_metrics.py.
+
+Task: Added daytime filtering and daily aggregation helpers.
+
+Decisions made:
+- Added filter_daytime_hours and aggregate_daily utilities to src/preprocessing.py with tests in tests/test_preprocessing.py.
+
+Task: Added chaos analysis script for golden sample.
+
+Decisions made:
+- Added src/chaos_analysis.py to compute Hurst and correlation dimension on daytime hourly and daily aggregated series and save artifacts.
+- Added a small IO test for saving artifacts in tests/test_chaos.py.
+
+Task: Generated Task 3 chaos metrics artifact.
+
+Decisions made:
+- Ran chaos analysis on data/golden_sample.parquet with daytime window 08:00–22:00.
+- Saved results to docs/reports/artifacts/2026-02-01/chaos_metrics_analysis.txt.
+
+Task: Implemented robust chaos metrics and HTML reporting.
+
+Decisions made:
+- Added diagnostic versions of Hurst and correlation dimension (with log-log fit and R²) in src/chaos_metrics.py.
+- Extended src/visualization.py with phase portrait and log-log diagnostic plots.
+- Added src/report_generator.py and src/generate_task3_report.py to build an HTML report with Plotly figures.
+- Added tests for chaos diagnostics and report generation in tests/test_chaos.py.
+
+Task: Generated Task 3 HTML report.
+
+Decisions made:
+- Generated docs/reports/task3_chaos_report.html from data/golden_sample.parquet.
+
+Task: Added scikit-learn chaos analysis run.
+
+Decisions made:
+- Added sklearn-enabled regression fitting in src/chaos_metrics.py.
+- Added sklearn analysis runner in src/chaos_analysis_sklearn.py and comparison artifact generator.
+- Added sklearn-conditional test in tests/test_chaos.py.
+
+Task: Documented Task 3 chaos report.
+
+Decisions made:
+- Added extended Task 3 markdown report with methods, results, interpretation, and artifact links in docs/reports/task3-chaos-report.md.

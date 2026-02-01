@@ -30,12 +30,16 @@ The inventory system is modeled as a unity-feedback loop where the controller ge
 
 **Elements and interpretation**
 
-- **Reference** $I_{target}$: desired inventory level (setpoint).
-- **Error** $E(t)=I_{target}-I(t)$: deviation from target.
-- **Controller output** $U(t)$: proportional replenishment policy signal.
-- **Lead time / delay** $L$: transport delay in the supply chain.
-- **Plant / process**: inventory mass balance (integrator in linear approximation).
-- **Disturbance** $D(t)$: demand (hourly sales), subtracts inventory.
+```{=latex}
+\begin{itemize}
+\item \textbf{Reference} $I_{target}$: desired inventory level (setpoint).
+\item \textbf{Error} $E(t)=I_{target}-I(t)$: deviation from target.
+\item \textbf{Controller output} $U(t)$: proportional replenishment policy signal.
+\item \textbf{Lead time / delay} $L$: transport delay in the supply chain.
+\item \textbf{Plant / process}: inventory mass balance (integrator in linear approximation).
+\item \textbf{Disturbance} $D(t)$: demand (hourly sales), subtracts inventory.
+\end{itemize}
+```
 
 ## Element transfer functions
 
@@ -114,10 +118,10 @@ J=\begin{bmatrix}
 \end{bmatrix}.
 $$
 
-The equilibrium type is determined from the eigenvalues of $J$. In the project parameter regime, the eigenvalues are complex with negative real part, e.g.:
+The equilibrium type is determined from the eigenvalues of $J$. In the project parameter regime, the eigenvalues are complex with negative real part:
 
 $$
-\lambda_{1,2}\approx -0.255\pm 0.970i,
+\lambda_{1,2}\approx -0.255\pm 0.970i.
 $$
 
 which corresponds to a **stable focus** (damped oscillations). This matches the qualitative behavior typically associated with bullwhip-like oscillations: inventory and replenishment oscillate transiently and then settle.

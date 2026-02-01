@@ -25,7 +25,7 @@ This repository hosts the computational implementation of the "Systems Theory" d
 
 ## Project Repo Structure
 ```
-scm-chaos-benchmark/
+systems-theory-task/
 ├── data/                   # Raw and processed data (git-ignored)
 ├── config/                 # Configuration files
 │   └── params.yaml         # Parameters for ODEs, Control Theory, etc.

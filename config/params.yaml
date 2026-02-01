@@ -1,0 +1,12 @@
+# Parameters for ODEs, Control Theory, and analysis
+ode:
+  inventory_decay_rate: 0.01  # spoilage per hour
+  temperature_sensitivity: 0.001
+  initial_inventory: 100.0
+linear_model:
+  integrator_gain: 1.0
+  delay: 0.5
+chaos:
+  hurst_window: 1024
+  correlation_dimension_k: 10
+  lyapunov_max_time: 100

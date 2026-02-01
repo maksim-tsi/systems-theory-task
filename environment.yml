@@ -1,0 +1,16 @@
+name: tsi
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - scipy
+  - statsmodels
+  - plotly
+  - pytest
+  - pip
+  - pip:
+    - datasets
+    - nolds
+    - hurst

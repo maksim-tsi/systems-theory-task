@@ -1,14 +1,14 @@
 """HTML report generation for Task 3 chaos analysis."""
-from __future__ import annotations
-
 from pathlib import Path
-from typing import Dict
+import sys
 
 import pandas as pd
-import plotly.io as pio
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from src import chaos_metrics, preprocessing, visualization
-
 
 def generate_task3_report(
     data_path: Path,
@@ -16,105 +16,127 @@ def generate_task3_report(
     start_hour: int = 8,
     end_hour: int = 22,
 ) -> None:
-    """Generate a Task 3 HTML report with chaos metrics and plots.
-
-    Args:
-        data_path: Path to golden_sample.parquet.
-        output_path: Output HTML report path.
-        start_hour: Start of daytime window (inclusive).
-        end_hour: End of daytime window (inclusive).
-    """
+    """Generate comprehensive HTML report."""
+    print(f"Generating HTML report from {data_path}...")
+    
+    # 1. Load Data
     df = pd.read_parquet(data_path)
     if "dt" not in df.columns:
         raise KeyError("dt column is required")
     df = df.copy()
     df["dt"] = pd.to_datetime(df["dt"])
-    df["hour_index"] = df["dt"].dt.hour if "hour_index" not in df.columns else df["hour_index"]
+    if "hour_index" not in df.columns:
+        df["hour_index"] = df["dt"].dt.hour
 
     df_day = preprocessing.filter_daytime_hours(df, "hour_index", start=start_hour, end=end_hour)
     hourly_series = df_day["sales"].to_numpy()
-    daily = preprocessing.aggregate_daily(df_day, dt_col="dt", value_col="sales", agg="sum")
-    daily_series = daily["sales"].to_numpy()
-
-    hurst_hourly = chaos_metrics.hurst_rs_details(hourly_series)
-    d2_hourly = chaos_metrics.correlation_dimension_details(hourly_series)
-    hurst_daily = chaos_metrics.hurst_rs_details(daily_series)
-    d2_daily = chaos_metrics.correlation_dimension_details(daily_series)
-
-    figs = _build_figures(df_day, hourly_series, hurst_hourly, d2_hourly)
-    html = _build_html(
-        title="Task 3 — Chaos Metrics Report",
-        summary=_summary_block(start_hour, end_hour, hourly_series, daily_series, hurst_hourly, d2_hourly, hurst_daily, d2_daily),
-        figures=figs,
+    
+    # 2. Compute Metrics (Hourly only, as Daily is too short)
+    print("Computing Chaos Metrics (Hourly)...")
+    hurst_res = chaos_metrics.hurst_rs_details(hourly_series)
+    d2_res = chaos_metrics.correlation_dimension_details(hourly_series)
+    
+    # 3. Generate Figures
+    print("Generating Plots...")
+    # Time Series
+    fig_ts = visualization.plot_time_series_with_stockouts(
+        df_day, time_col="dt", sales_col="sales", stockout_col="is_stockout"
     )
+    
+    # Phase Portrait
+    fig_phase = visualization.plot_phase_portrait(hourly_series, delay=1)
+    
+    # Hurst Plot
+    if hurst_res.get("valid"):
+        fig_hurst = visualization.plot_hurst_fit(hurst_res)
+    else:
+        fig_hurst = None
+        
+    # D2 Plot
+    if d2_res.get("valid"):
+        fig_d2 = visualization.plot_correlation_dim(d2_res)
+    else:
+        fig_d2 = None
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(html)
-
-
-def _summary_block(
-    start_hour: int,
-    end_hour: int,
-    hourly_series,
-    daily_series,
-    hurst_hourly: Dict,
-    d2_hourly: Dict,
-    hurst_daily: Dict,
-    d2_daily: Dict,
-) -> str:
-    return """
-    <h2>Summary</h2>
-    <ul>
-      <li>Daytime window: {start:02d}:00–{end:02d}:00</li>
-      <li>Hourly samples: {n_hourly}</li>
-      <li>Daily samples: {n_daily}</li>
-      <li>Hourly Hurst: {h_hourly:.4f} (R²={h_r2:.3f})</li>
-      <li>Hourly D2: {d2_hourly:.4f} (R²={d2_r2:.3f})</li>
-      <li>Daily Hurst: {h_daily:.4f} (R²={h2_r2:.3f})</li>
-      <li>Daily D2: {d2_daily:.4f} (R²={d22_r2:.3f})</li>
-    </ul>
-    """.format(
-        start=start_hour,
-        end=end_hour,
-        n_hourly=len(hourly_series),
-        n_daily=len(daily_series),
-        h_hourly=hurst_hourly.get("H", 0.0),
-        h_r2=hurst_hourly.get("r2", 0.0),
-        d2_hourly=d2_hourly.get("D2", 0.0),
-        d2_r2=d2_hourly.get("r2", 0.0),
-        h_daily=hurst_daily.get("H", 0.0),
-        h2_r2=hurst_daily.get("r2", 0.0),
-        d2_daily=d2_daily.get("D2", 0.0),
-        d22_r2=d2_daily.get("r2", 0.0),
-    )
-
-
-def _build_figures(df_day, hourly_series, hurst_hourly, d2_hourly):
-    figs = {
-        "time_series": visualization.plot_time_series_with_stockouts(
-            df_day, time_col="dt", sales_col="sales", stockout_col="is_stockout"
-        ),
-        "phase": visualization.plot_phase_portrait(hourly_series, delay=1),
-        "hurst": visualization.plot_hurst_fit(hurst_hourly),
-        "d2": visualization.plot_correlation_dim(d2_hourly),
-    }
-    return figs
-
-
-def _build_html(title: str, summary: str, figures: Dict[str, object]) -> str:
-    fig_html = "\n".join(
-        [
-            f"<h2>{name.replace('_', ' ').title()}</h2>" + pio.to_html(fig, include_plotlyjs="cdn", full_html=False)
-            for name, fig in figures.items()
-        ]
-    )
-    return f"""
+    # 4. Compile HTML
+    html_content = f"""
+    <!DOCTYPE html>
     <html>
-      <head><meta charset="utf-8"><title>{title}</title></head>
-      <body>
-        <h1>{title}</h1>
-        {summary}
-        {fig_html}
-      </body>
+    <head>
+        <meta charset="utf-8">
+        <title>Systems Theory: Chaos Analysis Report</title>
+        <style>
+            body {{ font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }}
+            h1, h2 {{ color: #2c3e50; }}
+            .metric-card {{ background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
+            .plot-container {{ margin-bottom: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+        </style>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    </head>
+    <body>
+        <h1>Task 3: Chaos Theory Analysis</h1>
+        <p><b>Dataset:</b> FreshRetailNet-50K (Golden Sample)</p>
+        <p><b>Analysis Window:</b> {start_hour}:00 - {end_hour}:00 (Daytime hours only)</p>
+        
+        <div class="metric-card">
+            <h2>Computed Metrics</h2>
+            <ul>
+                <li><b>Hurst Exponent (H):</b> {hurst_res.get('H', 0.0):.4f} 
+                    (R² = {hurst_res.get('r2', 0.0):.4f})
+                    <br><i>Interpretation:</i> {interpret_hurst(hurst_res.get('H', 0.5))}
+                </li>
+                <li><b>Correlation Dimension (D2):</b> {d2_res.get('D2', 0.0):.4f}
+                    (R² = {d2_res.get('r2', 0.0):.4f})
+                    <br><i>Interpretation:</i> Fractal dimension indicating {interpret_d2(d2_res.get('D2', 0.0))} degrees of freedom.
+                </li>
+            </ul>
+        </div>
+
+        <h2>1. Time Series Dynamics</h2>
+        <div class="plot-container">{fig_to_html(fig_ts)}</div>
+
+        <h2>2. Phase Space Reconstruction</h2>
+        <p>Visualization of the attractor in 2D embedding (x(t) vs x(t+1)).</p>
+        <div class="plot-container">{fig_to_html(fig_phase)}</div>
+
+        <h2>3. R/S Analysis (Hurst Estimation)</h2>
+        <p>Log-Log plot of Rescaled Range vs Time Scale.</p>
+        <div class="plot-container">{fig_to_html(fig_hurst)}</div>
+
+        <h2>4. Correlation Sum (D2 Estimation)</h2>
+        <p>Log-Log plot of Correlation Integral C(r) vs Radius r.</p>
+        <div class="plot-container">{fig_to_html(fig_d2)}</div>
+        
+        <hr>
+        <p><i>Generated by Systems Theory Pipeline</i></p>
+    </body>
     </html>
     """
+    
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
+    
+    print(f"Report saved to: {output_path.resolve()}")
+
+def interpret_hurst(h):
+    if h < 0.45: return "Anti-persistent (Mean reverting)"
+    if 0.45 <= h <= 0.55: return "Random Walk (Stochastic)"
+    return "Persistent (Trending/Memory)"
+
+def interpret_d2(d2):
+    if d2 < 0.1: return "Fixed Point (Static)"
+    if d2 < 1.1: return "Limit Cycle (Periodic)"
+    return "Low-dimensional Chaos or Strange Attractor"
+
+def fig_to_html(fig):
+    if fig is None:
+        return "<p><i>Plot not available (insufficient data)</i></p>"
+    return fig.to_html(full_html=False, include_plotlyjs=False)
+
+if __name__ == "__main__":
+    # Test run
+    generate_task3_report(
+        Path("data/golden_sample.parquet"),
+        Path("docs/reports/task3_chaos_report.html")
+    )

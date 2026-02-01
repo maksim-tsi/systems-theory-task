@@ -169,3 +169,8 @@ Decisions made:
 - Added sklearn-enabled regression fitting in src/chaos_metrics.py.
 - Added sklearn analysis runner in src/chaos_analysis_sklearn.py and comparison artifact generator.
 - Added sklearn-conditional test in tests/test_chaos.py.
+
+Task: Documented Task 3 chaos report.
+
+Decisions made:
+- Added extended Task 3 markdown report with methods, results, interpretation, and artifact links in docs/reports/task3-chaos-report.md.

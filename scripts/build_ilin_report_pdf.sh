@@ -11,6 +11,7 @@ pandoc "$IN_MD" \
   --from markdown+yaml_metadata_block+tex_math_dollars+tex_math_single_backslash \
   --to pdf \
   --pdf-engine=xelatex \
+  --include-before-body=docs/reports/titlepage.tex \
   --toc \
   --number-sections \
   -V geometry:margin=25mm \

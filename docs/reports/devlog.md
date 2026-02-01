@@ -49,3 +49,19 @@ Task: Updated data loader to blind bestseller strategy.
 Decisions made:
 - Replaced data loader API with category-agnostic scan_and_select and hourly expansion aligned to first_category_id fields.
 - Updated tests in tests/test_data_loader.py to match new API and 24-hour expansion behavior.
+
+Task: Fixed data loader to enforce full dataset loading.
+
+Decisions made:
+- Enforced non-streaming load (streaming=False) and guarded against IterableDataset in src/data_loader.py.
+- Clarified MultiIndex handling for best SKU selection and added scalar extraction for metrics.
+
+Task: Updated data loader tests for non-streaming API.
+
+Decisions made:
+- Replaced streaming-based tests with checks for load_full_dataset, find_golden_sample_vectorized, and explode_and_save in tests/test_data_loader.py.
+
+Task: Golden sample analysis report.
+
+Decisions made:
+- Computed descriptive statistics and hourly profiles from data/golden_sample.parquet and saved findings in docs/reports/golden-sample-analysis.md.

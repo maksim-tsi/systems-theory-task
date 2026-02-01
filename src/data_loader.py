@@ -1,153 +1,182 @@
 """Data loading utilities for FreshRetailNet-50K.
 
-Streaming loader using Hugging Face `datasets`.
-Implements an ETL-style pipeline for streaming selection and hourly expansion.
+Loads the full dataset into memory, selects optimal time series with progress tracking,
+and saves the result to Parquet.
 """
-from typing import Iterator, Callable, Dict, Any, Optional, List, Tuple
+import sys
 from pathlib import Path
-import math
+from typing import Tuple, Optional, cast
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 try:
     import datasets
-except Exception:  # pragma: no cover - tests will mock or runtime will raise later
+except ImportError:
     datasets = None
 
+# Register tqdm for pandas (df.progress_apply)
+tqdm.pandas()
 
-def stream_hourly_fresh_retail(
-    repo: str,
-    batch_size: int = 1000,
-    filter_fn: Optional[Callable[[Dict[str, Any]], bool]] = None,
-    split: str = "train",
-) -> Iterator[pd.DataFrame]:
-    """Stream dataset and yield hourly-expanded DataFrame batches."""
-    if datasets is None:
-        raise RuntimeError("datasets library is required")
-
-    ds_iter = datasets.load_dataset(repo, split=split, streaming=True)
-
-    batch: List[Dict[str, Any]] = []
-    for rec in ds_iter:
-        if filter_fn and not filter_fn(rec):
-            continue
-
-        hours_sale = rec.get("hours_sale") or []
-        hours_stock = rec.get("hours_stock_status") or []
-
-        base = {
-            "dt": rec.get("dt"),
-            "store_id": rec.get("store_id"),
-            "product_id": rec.get("product_id"),
-            "category_id": rec.get("first_category_id"),
-            "price": rec.get("discount", 1.0),
-            "temperature": rec.get("avg_temperature", 20.0),
-        }
-
-        for hour_idx in range(24):
-            row = base.copy()
-            row["hour_index"] = hour_idx
-
-            s_val = float(hours_sale[hour_idx]) if hour_idx < len(hours_sale) else 0.0
-            st_val = int(hours_stock[hour_idx]) if hour_idx < len(hours_stock) else 1
-
-            row["sales"] = s_val
-            row["is_stockout"] = 1 if st_val == 0 else 0
-
-            batch.append(row)
-
-        if len(batch) >= batch_size * 24:
-            yield pd.DataFrame(batch)
-            batch = []
-
-    if batch:
-        yield pd.DataFrame(batch)
-
-
-def scan_and_select(
-    repo: str,
-    split: str = "train",
-    scan_records: int = 50000,
-    min_avg_daily_sales: float = 2.0,
-) -> Dict[str, Any]:
-    """Heuristic ranking to find the "Golden Sample" (Best SKU)."""
-    if datasets is None:
-        raise RuntimeError("datasets library missing")
-
-    print(f"Scanning first {scan_records} records for high-velocity items...")
-    ds_iter = datasets.load_dataset(repo, split=split, streaming=True)
-
-    candidates: Dict[Tuple[Any, Any], Dict[str, Any]] = {}
-
-    for i, rec in enumerate(ds_iter):
-        if i >= scan_records:
-            break
-
-        key = (rec.get("store_id"), rec.get("product_id"))
-
-        sales = rec.get("hours_sale") or []
-        daily_vol = sum(float(x) for x in sales if x)
-
-        if key not in candidates:
-            candidates[key] = {"days": 0, "total_vol": 0.0, "zeros": 0}
-
-        candidates[key]["days"] += 1
-        candidates[key]["total_vol"] += daily_vol
-        if daily_vol == 0:
-            candidates[key]["zeros"] += 1
-
-    best_key: Optional[Tuple[Any, Any]] = None
-    best_score = -1.0
-
-    print(f"Analyzed {len(candidates)} unique SKU/Store pairs.")
-
-    for key, stats in candidates.items():
-        if stats["days"] < 10:
-            continue
-
-        avg_daily = stats["total_vol"] / stats["days"]
-        if avg_daily < min_avg_daily_sales:
-            continue
-
-        consistency = 1.0 - (stats["zeros"] / stats["days"])
-        score = avg_daily * consistency
-
-        if score > best_score:
-            best_score = score
-            best_key = key
-
-    if not best_key:
-        raise ValueError("No suitable golden sample found. Try lowering min_avg_daily_sales.")
-
-    print(f"Winner: Store={best_key[0]}, Product={best_key[1]} (Score={best_score:.2f})")
-    return {"store_id": best_key[0], "product_id": best_key[1]}
-
-
-def materialize_golden_sample(
-    output_path: Path,
+def load_full_dataset(
     repo: str = "Dingdong-Inc/FreshRetailNet-50K",
-    scan_depth: int = 50000,
+    split: str = "train"
 ) -> pd.DataFrame:
-    """Pipeline: Select best -> Stream filter -> Save Parquet."""
-    target = scan_and_select(repo, scan_records=scan_depth)
-    s_id, p_id = target["store_id"], target["product_id"]
+    """Download and load the full dataset into Pandas with logging."""
+    if datasets is None:
+        raise RuntimeError("The 'datasets' library is required. Install via `pip install datasets`.")
+    
+    print(f"\n[1/4] Downloading dataset '{repo}' (split='{split}')...")
+    try:
+        # Load fully into memory (no streaming)
+        ds = datasets.load_dataset(repo, split=split, streaming=False)
+        print(f"      Dataset loaded via HuggingFace. Rows: {len(ds)}")
+    except Exception as e:
+        print(f"      CRITICAL ERROR downloading dataset: {e}")
+        raise
 
-    def is_target(rec: Dict[str, Any]) -> bool:
-        return (rec.get("store_id") == s_id) and (rec.get("product_id") == p_id)
+    print(f"[2/4] Converting Arrow table to Pandas DataFrame...")
+    if hasattr(datasets, "IterableDataset") and isinstance(ds, datasets.IterableDataset):
+        raise RuntimeError("Streaming dataset detected. Set streaming=False to load fully.")
 
-    print(f"Materializing full history for Target {target}...")
-    chunks: List[pd.DataFrame] = []
-    for df_chunk in stream_hourly_fresh_retail(repo, filter_fn=is_target):
-        chunks.append(df_chunk)
-        print(f"Collected {len(df_chunk)} hourly records...", end="\r")
+    df = cast(pd.DataFrame, ds.to_pandas())
+    
+    if df.empty:
+        raise ValueError("Downloaded dataset is empty!")
+        
+    print(f"      Conversion complete. DataFrame shape: {df.shape}")
+    print(f"      Memory usage: {df.memory_usage(deep=True).sum() / 1024**2:.2f} MB")
+    return df
 
-    if not chunks:
-        raise ValueError("No rows materialized for selected golden sample")
+def find_golden_sample_vectorized(df: pd.DataFrame) -> Tuple[int | str, int | str]:
+    """Find the best (Store, Product) pair using vectorized operations."""
+    print(f"\n[3/4] Analyzing dataset to find 'Golden Sample' (Best SKU)...")
+    
+    # 1. Calculate stats per row using progress_apply
+    print("      Calculating daily volumes and stockouts (this may take a moment)...")
+    
+    # Check if columns exist
+    if 'hours_sale' not in df.columns or 'hours_stock_status' not in df.columns:
+        raise KeyError(f"Missing required columns. Found: {df.columns.tolist()}")
 
-    full_df = pd.concat(chunks).sort_values(["dt", "hour_index"]).reset_index(drop=True)
+    # Summing arrays in cells. progress_apply gives us a bar.
+    # Note: Using numpy directly on list columns is tricky, pandas apply is safer here.
+    df['daily_vol'] = df['hours_sale'].progress_apply(np.sum)
+    df['daily_stockouts'] = df['hours_stock_status'].progress_apply(
+        lambda x: np.sum(1 - np.array(x)) if isinstance(x, (list, np.ndarray)) else 0
+    )
+    
+    print("      Grouping by (store_id, product_id)...")
+    # 2. Group by (Store, Product) to get full history stats
+    stats = df.groupby(['store_id', 'product_id']).agg({
+        'daily_vol': 'mean',          # Avg daily sales
+        'daily_stockouts': 'sum',     # Total stockout hours
+        'dt': 'count'                 # Days of history
+    }).rename(columns={'dt': 'days'})
+    
+    print(f"      Unique Time Series found: {len(stats)}")
 
+    # 3. Filter candidates
+    # Must have at least 60 days of history
+    stats = stats[stats['days'] > 60]
+    print(f"      Candidates > 60 days: {len(stats)}")
+    
+    # Must have some stockouts (for nonlinear dynamics) but not be always empty
+    # Filter: At least 5 hours of stockout total, but less than 10 hours per day avg (avoid discontinued items)
+    stats = stats[(stats['daily_stockouts'] > 5) & (stats['daily_stockouts'] < stats['days'] * 10)]
+    print(f"      Candidates with valid stockout dynamics: {len(stats)}")
+    
+    # 4. Score = Volume
+    if stats.empty:
+        raise ValueError("No suitable candidates found after filtering!")
+        
+    best_idx = stats['daily_vol'].idxmax()
+    if not isinstance(best_idx, tuple) or len(best_idx) != 2:
+        raise ValueError("Expected MultiIndex (store_id, product_id) from grouping.")
+    best_store, best_product = cast(Tuple[int | str, int | str], best_idx)
+    
+    metrics = stats.loc[best_idx]
+    if not isinstance(metrics, pd.Series):
+        raise ValueError("Expected a single row of metrics for best index.")
+
+    avg_daily_sales = float(metrics["daily_vol"])
+    days = int(metrics["days"])
+    total_stockouts = int(metrics["daily_stockouts"])
+
+    print(f"      WINNER FOUND: Store={best_store}, Product={best_product}")
+    print(
+        f"      Stats: Avg Daily Sales={avg_daily_sales:.2f}, "
+        f"Days={days}, Total Stockout Hours={total_stockouts}"
+    )
+    
+    return best_store, best_product
+
+def explode_and_save(
+    df: pd.DataFrame,
+    store_id: int | str,
+    product_id: int | str,
+    output_path: Path
+):
+    """Filter for specific item, explode hourly data, and save."""
+    print(f"\n[4/4] Processing and Saving...")
+    
+    # Filter
+    subset = df[(df['store_id'] == store_id) & (df['product_id'] == product_id)].copy()
+    subset = subset.sort_values('dt')
+    print(f"      Filtered subset rows (days): {len(subset)}")
+    
+    records = []
+    # Using tqdm to show progress of the explosion loop
+    iterator = tqdm(subset.iterrows(), total=len(subset), desc="      Exploding hourly data")
+    
+    for _, row in iterator:
+        base = {
+            "dt": row['dt'],
+            "price": row.get('discount', 1.0),
+            "temp": row.get('avg_temperature', 0.0)
+        }
+        sales = row['hours_sale']
+        stock = row['hours_stock_status']
+        
+        # Ensure lists are length 24
+        if len(sales) != 24 or len(stock) != 24:
+            continue
+
+        for h in range(24):
+            r = base.copy()
+            r['hour_index'] = h
+            r['sales'] = float(sales[h])
+            # 0 = Stockout, 1 = Available. Invert for "is_stockout" flag (1=True)
+            r['is_stockout'] = 1 if stock[h] == 0 else 0
+            records.append(r)
+            
+    flat_df = pd.DataFrame(records)
+    
+    # Create sequential integer index for simplified ODE modeling later
+    flat_df['time_step'] = range(len(flat_df))
+    
+    # Create output directory
     output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    full_df.to_parquet(output_path)
-    print(f"\nSuccess! Saved {len(full_df)} rows to {output_path}")
-    return full_df
+    if not output_path.parent.exists():
+        print(f"      Creating directory: {output_path.parent.resolve()}")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+    flat_df.to_parquet(output_path)
+    print(f"\nSUCCESS! Data saved to: {output_path.resolve()}")
+    print(f"Total hourly observations: {len(flat_df)}")
+    print(f"Preview:\n{flat_df.head(3)}")
+
+def run_pipeline():
+    try:
+        df = load_full_dataset()
+        store_id, prod_id = find_golden_sample_vectorized(df)
+        explode_and_save(df, store_id, prod_id, Path("data/golden_sample.parquet"))
+    except KeyboardInterrupt:
+        print("\nPipeline stopped by user.")
+    except Exception as e:
+        print(f"\nPipeline FAILED: {e}")
+        # import traceback; traceback.print_exc()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    run_pipeline()

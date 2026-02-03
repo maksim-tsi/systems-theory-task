@@ -208,6 +208,7 @@ Decisions made:
 - Added nonlinear-model nullcline computation and phase-portrait plotting with quiver field and analytical nullclines.
 - Added correlation-dimension saturation scan across embedding dimensions and saturation plot integration into the HTML report.
 - Updated Task 2 report and main report text to document phase portrait and saturation analysis.
+- Regenerated HTML report (task3_chaos_report.html) and PDF report (Systems_Theory_Ilin.pdf).
 
 Decisions made:
 - Moved the title page to a dedicated LaTeX include: [docs/reports/titlepage.tex](docs/reports/titlepage.tex).

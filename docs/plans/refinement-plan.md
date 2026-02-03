@@ -26,8 +26,9 @@ Owner: GitHub Copilot
    - [x] `src/generate_task3_report.py`: include new plot in HTML
 5. [x] Update main report
    - [x] `docs/Theory of Systems - Ilin.md`: update Task 1 notation, Task 2 figure, Task 3 saturation text
-6. [ ] Regenerate HTML report and validate
+6. [x] Regenerate HTML report and validate
 7. [x] Update devlog
+8. [x] Regenerate PDF report
 
 ## Notes
 - Use quiver field (15x15 grid) and analytical nullclines.

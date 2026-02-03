@@ -9,7 +9,7 @@ Owner: GitHub Copilot
 - Task 3: Add correlation-dimension saturation scan and plot; integrate into HTML report.
 
 ## Execution Checklist
-1. [ ] Add/adjust tests (TDD)
+1. [x] Add/adjust tests (TDD)
    - [x] `tests/test_models.py`: tests for `compute_nullclines()`
    - [x] `tests/test_chaos.py`: tests for `correlation_dimension_scan()` output shape
 2. [x] Implement Task 1 report edits
@@ -27,7 +27,7 @@ Owner: GitHub Copilot
 5. [x] Update main report
    - [x] `docs/Theory of Systems - Ilin.md`: update Task 1 notation, Task 2 figure, Task 3 saturation text
 6. [ ] Regenerate HTML report and validate
-7. [ ] Update devlog
+7. [x] Update devlog
 
 ## Notes
 - Use quiver field (15x15 grid) and analytical nullclines.

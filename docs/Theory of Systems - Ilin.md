@@ -143,7 +143,9 @@ $$
 \frac{dR}{dt}=0 \Rightarrow R = \frac{a}{b}(I_{target} - I).
 $$
 
-The phase portrait overlays these nullclines with the vector field and trajectories converging to the stable focus. The interactive plot is included in [docs/reports/task3_chaos_report.html](docs/reports/task3_chaos_report.html) under “Nonlinear Model Phase Portrait”.
+The phase portrait overlays these nullclines with the vector field and trajectories converging to the stable focus.
+
+![Phase portrait with nullclines and vector field](docs/reports/figures/task2_phase_portrait_nullclines.png)
 
 \newpage
 
@@ -193,7 +195,7 @@ We evaluate $D_2(m)$ for embedding dimensions $m\in\{2,3,4,5,6\}$; saturation (p
 
 ![Correlation dimension estimation ($D_2$ log-log fit)](docs/reports/figures/task3_correlation_dimension.png)
 
-The dimension saturation plot $D_2(m)$ is included in the interactive report: [docs/reports/task3_chaos_report.html](docs/reports/task3_chaos_report.html).
+![Dimension saturation: $D_2$ vs embedding dimension $m$](docs/reports/figures/task3_dimension_saturation.png)
 
 ## Results and interpretation
 
@@ -204,7 +206,7 @@ The computed invariants for the daytime hourly series are:
 
 **Interpretation.** Since $H>0.5$, the process is persistent (long-memory behavior), which is compatible with feedback-driven dynamics rather than a pure random walk. The non-integer value $D_2\approx 1.15$ indicates a low-dimensional geometric structure in reconstructed phase space, which is consistent with complex deterministic dynamics (potentially chaotic) rather than a purely stochastic cloud. Given the strong seasonality and the censoring introduced by stockouts, these results should be interpreted cautiously; however, together they support the hypothesis of bounded, non-trivial dynamics under supply-chain feedback.
 
-Interactive report is provided as an attached artifact: task3_chaos_report.html.
+
 
 \newpage
 

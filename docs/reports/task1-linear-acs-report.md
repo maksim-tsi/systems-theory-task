@@ -18,7 +18,7 @@ flowchart LR
 	R[I_target] --> E[Σ: error = I_target - I]
 	E --> C[Proportional Controller Kp]
 	C --> U[Replenishment U]
-	U --> P[Process: Inventory Integrator 1/s]
+	U --> P[Process: Inventory Integrator 1/p]
 	D[Demand D] -->|minus| P
 	P --> I[Inventory I]
 	I -->|feedback| E
@@ -34,51 +34,57 @@ Interpretation:
 **for review** — Linearized elements used in the model:
 
 - **Process (inventory integrator):**
-	$$I(s) = \frac{1}{s}\bigl(U(s) - D(s)\bigr)$$
-	Transfer from $U$ to $I$: $$G_p(s) = \frac{1}{s}$$
+	$$I(p) = \frac{1}{p}\bigl(U(p) - D(p)\bigr)$$
+	Transfer from $U$ to $I$: $$G_p(p) = \frac{1}{p}$$
 
 - **Controller (proportional):**
 	$$U(t) = K_p\bigl(I_{target} - I(t)\bigr)$$
-	Transfer from error $E(s)$ to $U(s)$: $$G_c(s) = K_p$$
+	Transfer from error $E(p)$ to $U(p)$: $$G_c(p) = K_p$$
 
 - **Lead time (delay) approximation (optional):**
-	$$G_d(s) = e^{-Ls} \approx \frac{1 - \frac{Ls}{2}}{1 + \frac{Ls}{2}}$$
+	$$G_d(p) = e^{-Lp} \approx \frac{1 - \frac{Lp}{2}}{1 + \frac{Lp}{2}}$$
 
-Assumption: demand $D(s)$ is treated as a disturbance input; the closed-loop transfer below is from $I_{target}$ to $I$.
+Assumption: demand $D(p)$ is treated as a disturbance input; the closed-loop transfer below is from $I_{target}$ to $I$.
 
 ## 4. Overall Closed-Loop Transfer Function
-Combining $G_c(s)$ and $G_p(s)$ with unity feedback, the closed-loop transfer from $I_{target}$ to $I$ is:
+Combining $G_c(p)$ and $G_p(p)$ with unity feedback, the closed-loop transfer from $I_{target}$ to $I$ is:
 
-$$G_{cl}(s) = \frac{G_c(s)G_p(s)}{1 + G_c(s)G_p(s)} = \frac{K_p \cdot (1/s)}{1 + K_p \cdot (1/s)} = \frac{K_p}{s + K_p}$$
+The open-loop transfer function is $W_{open}(p) = \frac{1}{p}$. With unity feedback and $K_p=1$, the closed-loop transfer function is:
+
+$$W(p) = \frac{P(p)}{Q(p)} = \frac{1}{p + 1}$$
+
+$$W(p) = \frac{G_c(p)G_p(p)}{1 + G_c(p)G_p(p)} = \frac{K_p \cdot (1/p)}{1 + K_p \cdot (1/p)} = \frac{K_p}{p + K_p}$$
 
 **Characteristic equation:**
-$$s + K_p = 0$$
+$$Q(p) = p + K_p = 0$$
+
+The root is $p=-1$, indicating asymptotic stability.
 
 ## 4b. Disturbance Transfer Function (Demand Rejection)
-For SCM, the key response is to demand $D(s)$. With negative feedback and disturbance at the plant input:
+For SCM, the key response is to demand $D(p)$. With negative feedback and disturbance at the plant input:
 
-$$G_{DI}(s) = \frac{I(s)}{D(s)} = -\frac{G_p(s)}{1 + G_c(s)G_d(s)G_p(s)}$$
+$$G_{DI}(p) = \frac{I(p)}{D(p)} = -\frac{G_p(p)}{1 + G_c(p)G_d(p)G_p(p)}$$
 
 For $L=0$ (no delay):
 
-$$G_{DI}(s) = -\frac{1}{s+K_p}$$
+$$G_{DI}(p) = -\frac{1}{p+K_p}$$
 
 ## 5. Stability Analysis
-The system is stable if all closed-loop poles have negative real parts. For $G_{cl}(s) = \frac{K_p}{s + K_p}$, the pole is at $s = -K_p$.
+The system is stable if all closed-loop poles have negative real parts. For $W(p) = \frac{K_p}{p + K_p}$, the pole is at $p = -K_p$.
 
 **Stability condition:**
-$$K_p > 0 \Rightarrow \Re(s) < 0$$
+$$K_p > 0 \Rightarrow \Re(p) < 0$$
 
 Therefore, any positive proportional gain yields a stable first-order closed-loop response.
 
 ## 6. Computed Results (from code)
 Using the current configuration ($K_p = 1.0$):
 
-- Reference tracking (no delay): $G_{cl}(s) = \frac{1}{s + 1}$ with pole $s=-1$ (stable).
-- Disturbance response (no delay): $G_{DI}(s) = -\frac{1}{s + 1}$ with pole $s=-1$ (stable).
+- Reference tracking (no delay): $W(p) = \frac{1}{p + 1}$ with pole $p=-1$ (stable).
+- Disturbance response (no delay): $G_{DI}(p) = -\frac{1}{p + 1}$ with pole $p=-1$ (stable).
 - Lead time scenario ($L=2$, Padé 1st order):
-	- $G_{cl}(s) = \frac{s-1}{s^2 + 2s - 1}$
-	- Poles: $s \approx -2.414,\; 0.414$ (unstable due to positive pole)
+	- $W(p) = \frac{p-1}{p^2 + 2p - 1}$
+	- Poles: $p \approx -2.414,\; 0.414$ (unstable due to positive pole)
 
 See the recorded outputs in [docs/reports/artifacts/2026-02-01/linear_control_analysis.txt](docs/reports/artifacts/2026-02-01/linear_control_analysis.txt).
 
@@ -91,7 +97,7 @@ See the recorded outputs in [docs/reports/artifacts/2026-02-01/linear_control_an
 6. **Integrate results into final PDF report** with a short narrative for Task 1.
 
 ## 8. Conclusion
-The linear ACS model for inventory control is fully specified with a proportional controller and integrator process. The resulting closed-loop transfer function $G_{cl}(s) = \frac{K_p}{s + K_p}$ yields a single pole at $s = -K_p$, ensuring stability for any $K_p > 0$. The computed artifact confirms stability for the current configuration and provides concrete values to reference in the final report.
+The linear ACS model for inventory control is fully specified with a proportional controller and integrator process. The resulting closed-loop transfer function $W(p) = \frac{K_p}{p + K_p}$ yields a single pole at $p = -K_p$, ensuring stability for any $K_p > 0$. The computed artifact confirms stability for the current configuration and provides concrete values to reference in the final report.
 
 ## 9. Introduction
 This section documents the linear automatic control system (ACS) formulation for the inventory dynamics of the doctoral research object. The goal is to provide a clear control-theoretic representation, derive the necessary transfer functions, and establish stability criteria to support subsequent nonlinear and chaos analyses in the broader assignment.

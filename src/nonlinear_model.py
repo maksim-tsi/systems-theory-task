@@ -118,6 +118,28 @@ def compute_equilibrium(params: Dict[str, Any]) -> np.ndarray:
     return np.array([inventory_star, repl_star], dtype=float)
 
 
+def compute_nullclines(params: Dict[str, Any]):
+    """Return nullcline functions for dI/dt=0 and dR/dt=0.
+
+    Returns:
+        Tuple of callables (nullcline_I, nullcline_R) where:
+            nullcline_I(I) = D + decay * I
+            nullcline_R(I) = (alpha / beta) * (i_target - I)
+    """
+    decay = _decay_rate(params)
+    demand = params.get("demand", 0.0)
+    alpha = params.get("replenishment_gain", 1.0)
+    beta = params.get("replenishment_decay", 1.0)
+    i_target = params.get("i_target", 1.0)
+
+    if np.isclose(beta, 0.0):
+        raise ValueError("replenishment_decay must be non-zero to compute nullclines.")
+
+    nullcline_i = lambda inventory: demand + decay * inventory
+    nullcline_r = lambda inventory: (alpha / beta) * (i_target - inventory)
+    return nullcline_i, nullcline_r
+
+
 def jacobian_matrix(params: Dict[str, Any]) -> np.ndarray:
     """Jacobian matrix for the 2D system."""
     decay = _decay_rate(params)

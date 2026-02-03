@@ -123,9 +123,58 @@ def export_task3_figures(start_hour: int = 8, end_hour: int = 22) -> None:
         fig_d2.write_image(FIG_DIR / "task3_correlation_dimension.png", scale=2)
 
 
+def export_task2_phase_portrait() -> None:
+    """Export Task 2 nonlinear model phase portrait with nullclines."""
+    import yaml
+
+    from src import nonlinear_model, visualization
+
+    FIG_DIR.mkdir(parents=True, exist_ok=True)
+
+    config_path = ROOT / "config" / "params.yaml"
+    with open(config_path, "r", encoding="utf-8") as f:
+        config = yaml.safe_load(f) or {}
+    ode_params = config.get("ode", {})
+
+    eq = nonlinear_model.compute_equilibrium(ode_params)
+    i_span = max(abs(eq[0]) * 0.5, 1.0)
+    r_span = max(abs(eq[1]) * 0.5, 1.0)
+
+    fig = visualization.plot_phase_portrait_with_nullclines(
+        ode_params,
+        i_range=(eq[0] - i_span, eq[0] + i_span),
+        r_range=(eq[1] - r_span, eq[1] + r_span),
+        grid_size=15,
+    )
+    fig.write_image(FIG_DIR / "task2_phase_portrait_nullclines.png", scale=2)
+
+
+def export_task3_saturation() -> None:
+    """Export Task 3 correlation dimension saturation plot."""
+    if not DATA_PATH.exists():
+        raise FileNotFoundError(f"Golden sample parquet not found: {DATA_PATH}")
+
+    FIG_DIR.mkdir(parents=True, exist_ok=True)
+
+    df = pd.read_parquet(DATA_PATH)
+    df = df.copy()
+    df["dt"] = pd.to_datetime(df["dt"])
+    if "hour_index" not in df.columns:
+        df["hour_index"] = df["dt"].dt.hour
+
+    df_day = preprocessing.filter_daytime_hours(df, "hour_index", start=8, end=22)
+    hourly_series = df_day["sales"].to_numpy()
+
+    d2_scan = chaos_metrics.correlation_dimension_scan(hourly_series)
+    fig = visualization.plot_dimension_saturation(d2_scan["m"], d2_scan["d2"])
+    fig.write_image(FIG_DIR / "task3_dimension_saturation.png", scale=2)
+
+
 def main() -> None:
     export_structural_diagram()
     export_task3_figures()
+    export_task2_phase_portrait()
+    export_task3_saturation()
     print(f"Saved figures under: {FIG_DIR}")
 
 

@@ -199,6 +199,17 @@ Decisions made:
 
 Task: Title page + TOC placement fix.
 
+Date: 2026-02-03
+
+Task: Implemented professor feedback refinements (Tasks 1–3).
+
+Decisions made:
+- Switched Task 1 transfer-function notation to $p$-domain and added explicit $W(p)=P(p)/Q(p)$ derivation with characteristic equation.
+- Added nonlinear-model nullcline computation and phase-portrait plotting with quiver field and analytical nullclines.
+- Added correlation-dimension saturation scan across embedding dimensions and saturation plot integration into the HTML report.
+- Updated Task 2 report and main report text to document phase portrait and saturation analysis.
+- Regenerated HTML report (task3_chaos_report.html) and PDF report (Systems_Theory_Ilin.pdf).
+
 Decisions made:
 - Moved the title page to a dedicated LaTeX include: [docs/reports/titlepage.tex](docs/reports/titlepage.tex).
 - Updated the PDF build to include the title page before the TOC and ensured the Abstract starts on a new page.

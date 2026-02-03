@@ -68,6 +68,16 @@ def test_correlation_dimension_details_valid():
     assert details.get("valid") is True
 
 
+def test_correlation_dimension_scan_returns_m_d2():
+    rng = np.random.default_rng(11)
+    ts = rng.normal(size=1500)
+    scan = chaos_metrics.correlation_dimension_scan(ts)
+    assert set(scan.keys()) == {"m", "d2"}
+    assert scan["m"] == [2, 3, 4, 5, 6]
+    assert len(scan["d2"]) == 5
+    assert all(np.isfinite(v) for v in scan["d2"])
+
+
 def test_hurst_rs_details_sklearn_if_available():
     rng = np.random.default_rng(12)
     ts = rng.normal(size=2048)

@@ -52,7 +52,15 @@ Using the parameters above:
 
 See the recorded outputs in [docs/reports/artifacts/2026-02-01/nonlinear_model_analysis.txt](docs/reports/artifacts/2026-02-01/nonlinear_model_analysis.txt).
 
-## 7. Recommendations and Next Steps
+## 7. Phase Portrait with Nullclines
+Nullclines are derived from the model equations:
+
+$$\frac{dI}{dt}=0 \Rightarrow R = D + \delta(T) I$$
+$$\frac{dR}{dt}=0 \Rightarrow R = \frac{a}{b}(I_{target} - I)$$
+
+The phase portrait overlays the vector field, nullclines, and trajectories converging to the stable focus at $(I^*, R^*)$.
+See the interactive figure in [docs/reports/task3_chaos_report.html](docs/reports/task3_chaos_report.html), section “Nonlinear Model Phase Portrait”.
+
+## 8. Recommendations and Next Steps
 1. Validate parameters against observed demand statistics from the dataset.
-2. Simulate trajectories for multiple initial conditions and visualize phase portraits.
-3. Connect nonlinear dynamics to chaos metrics in Task 3 by extracting long trajectories.
+2. Connect nonlinear dynamics to chaos metrics in Task 3 by extracting long trajectories.

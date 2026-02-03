@@ -104,6 +104,31 @@ def correlation_dimension(ts: Sequence[float], k: int = 10) -> float:
     return float(details["D2"])
 
 
+def correlation_dimension_scan(
+    ts: Sequence[float],
+    emb_dims: Sequence[int] | None = None,
+    delay: int = 1,
+    num_radii: int = 15,
+) -> dict[str, list[float] | list[int]]:
+    """Compute correlation dimension D2 across multiple embedding dimensions.
+
+    Args:
+        ts: 1D time series.
+        emb_dims: Embedding dimensions to evaluate.
+        delay: Time delay.
+        num_radii: Number of radii for GP estimation.
+
+    Returns:
+        Dict with keys "m" and "d2".
+    """
+    dims = list(emb_dims) if emb_dims is not None else [2, 3, 4, 5, 6]
+    d2_values: list[float] = []
+    for m in dims:
+        details = correlation_dimension_details(ts, emb_dim=m, delay=delay, num_radii=num_radii)
+        d2_values.append(float(details.get("D2", 0.0)))
+    return {"m": dims, "d2": d2_values}
+
+
 def correlation_dimension_details(
     ts: Sequence[float],
     emb_dim: int = 2,

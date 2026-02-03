@@ -46,7 +46,7 @@ The inventory system is modeled as a unity-feedback loop where the controller ge
 We use the standard linear approximation for inventory dynamics:
 
 $$
-I(s) = \frac{1}{s}\left(U(s) - D(s)\right).
+I(p) = \frac{1}{p}\left(U(p) - D(p)\right).
 $$
 
 Controller (proportional control):
@@ -55,10 +55,10 @@ $$
 U(t)=K_p\left(I_{target}-I(t)\right).
 $$
 
-Optional transport delay term is approximated by first-order Padé: $e^{-Ls}$.
+Optional transport delay term is approximated by first-order Padé: $e^{-Lp}$.
 
 $$
-G_d(s) \approx \frac{1 - \frac{Ls}{2}}{1 + \frac{Ls}{2}}.
+G_d(p) \approx \frac{1 - \frac{Lp}{2}}{1 + \frac{Lp}{2}}.
 $$
 
 ## Closed-loop transfer function and stability
@@ -66,10 +66,16 @@ $$
 With unity feedback and an integrator plant, the reference-to-output closed-loop transfer function is:
 
 $$
-G_{\mathrm{cl}}(s)=\frac{K_{\mathrm{p}}}{s+K_{\mathrm{p}}}.
+W(p)=\frac{K_{\mathrm{p}}}{p+K_{\mathrm{p}}}.
 $$
 
-The characteristic equation is $s+K_{\mathrm{p}}=0$ with pole $s=-K_{\mathrm{p}}$. Therefore, the baseline system is stable for $K_{\mathrm{p}}>0$.
+The open-loop transfer function is $W_{open}(p)=\frac{1}{p}$ and for $K_p=1$ we have:
+
+$$
+W(p)=\frac{P(p)}{Q(p)}=\frac{1}{p+1}.
+$$
+
+The characteristic equation is $Q(p)=p+K_{\mathrm{p}}=0$ with root $p=-K_{\mathrm{p}}$, indicating asymptotic stability for $K_{\mathrm{p}}>0$.
 
 **Effect of lead time.** Introducing delay increases phase lag and can destabilize the loop for sufficiently large $K_{\mathrm{p}}$ and $L$. In the project implementation, a Padé approximation is used and the resulting poles indicate loss of stability in a scenario with significant delay (e.g., $L=2$ in model time units), consistent with the bullwhip effect under transportation/ordering latency.
 
@@ -126,6 +132,19 @@ $$
 
 which corresponds to a **stable focus** (damped oscillations). This matches the qualitative behavior typically associated with bullwhip-like oscillations: inventory and replenishment oscillate transiently and then settle.
 
+## Phase portrait and nullclines
+
+The nullclines are:
+
+$$
+\frac{dI}{dt}=0 \Rightarrow R = D + \delta(T) I,
+$$
+$$
+\frac{dR}{dt}=0 \Rightarrow R = \frac{a}{b}(I_{target} - I).
+$$
+
+The phase portrait overlays these nullclines with the vector field and trajectories converging to the stable focus. The interactive plot is included in [docs/reports/task3_chaos_report.html](docs/reports/task3_chaos_report.html) under “Nonlinear Model Phase Portrait”.
+
 \newpage
 
 # Task 3 — Chaos Theory and Time Series Analysis
@@ -160,6 +179,10 @@ C(r)\sim r^{D_2},
 D_2=\lim_{r\to 0}\frac{\log C(r)}{\log r}.
 $$
 
+**Dimension saturation check:**
+
+We evaluate $D_2(m)$ for embedding dimensions $m\in\{2,3,4,5,6\}$; saturation (plateau) indicates low-dimensional dynamics compared to the $y=x$ noise baseline.
+
 ## Visual diagnostics
 
 ![Hourly sales time series with stockout markers](docs/reports/figures/task3_time_series.png)
@@ -169,6 +192,8 @@ $$
 ![Hurst exponent estimation (R/S log-log fit)](docs/reports/figures/task3_hurst_rs.png)
 
 ![Correlation dimension estimation ($D_2$ log-log fit)](docs/reports/figures/task3_correlation_dimension.png)
+
+The dimension saturation plot $D_2(m)$ is included in the interactive report: [docs/reports/task3_chaos_report.html](docs/reports/task3_chaos_report.html).
 
 ## Results and interpretation
 

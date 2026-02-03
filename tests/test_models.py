@@ -94,3 +94,30 @@ def test_inventory_control_delay_increases_order():
     tf = system.transfer_function_reference()
     den = np.asarray(tf.den, dtype=float).ravel()
     assert len(den) > 2
+
+
+def test_compute_nullclines_lines():
+    params = {
+        "inventory_decay_rate": 0.2,
+        "temperature_sensitivity": 0.01,
+        "temperature": 25.0,
+        "demand": 4.0,
+        "replenishment_gain": 2.0,
+        "replenishment_decay": 0.5,
+        "i_target": 10.0,
+    }
+    nullcline_i, nullcline_r = nonlinear_model.compute_nullclines(params)
+
+    i0, i1 = 1.0, 3.0
+    r0, r1 = nullcline_i(i0), nullcline_i(i1)
+    decay = params["inventory_decay_rate"] * (
+        1 + params["temperature_sensitivity"] * (params["temperature"] - 20.0)
+    )
+    expected_slope_i = decay
+    observed_slope_i = (r1 - r0) / (i1 - i0)
+    assert np.isclose(observed_slope_i, expected_slope_i)
+
+    r0, r1 = nullcline_r(i0), nullcline_r(i1)
+    expected_slope_r = -params["replenishment_gain"] / params["replenishment_decay"]
+    observed_slope_r = (r1 - r0) / (i1 - i0)
+    assert np.isclose(observed_slope_r, expected_slope_r)

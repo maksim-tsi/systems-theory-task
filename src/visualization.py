@@ -68,6 +68,132 @@ def plot_phase_portrait(series: np.ndarray, delay: int = 1):
     return fig
 
 
+def plot_phase_portrait_with_nullclines(
+    params: dict,
+    i_range: tuple[float, float],
+    r_range: tuple[float, float],
+    grid_size: int = 15,
+    t: np.ndarray | None = None,
+    y0: np.ndarray | None = None,
+):
+    """Phase portrait with nullclines and vector field for (I, R).
+
+    Args:
+        params: Model parameters.
+        i_range: (min, max) range for inventory axis.
+        r_range: (min, max) range for replenishment axis.
+        grid_size: Grid resolution for quiver field.
+        t: Optional time vector for trajectory.
+        y0: Optional initial state [I0, R0].
+    """
+    import plotly.figure_factory as ff
+    import plotly.graph_objects as go
+
+    from src import nonlinear_model
+
+    i_min, i_max = i_range
+    r_min, r_max = r_range
+    i_vals = np.linspace(i_min, i_max, grid_size)
+    r_vals = np.linspace(r_min, r_max, grid_size)
+    ii, rr = np.meshgrid(i_vals, r_vals)
+
+    decay = params.get("inventory_decay_rate", 0.01)
+    temp_sens = params.get("temperature_sensitivity", 0.0)
+    temperature = params.get("temperature", 20.0)
+    decay = decay * (1 + temp_sens * (temperature - 20.0))
+    demand = params.get("demand", 0.0)
+    alpha = params.get("replenishment_gain", 1.0)
+    beta = params.get("replenishment_decay", 1.0)
+    i_target = params.get("i_target", 1.0)
+
+    d_i = rr - demand - decay * ii
+    d_r = alpha * (i_target - ii) - beta * rr
+
+    fig = ff.create_quiver(
+        ii.flatten(),
+        rr.flatten(),
+        d_i.flatten(),
+        d_r.flatten(),
+        scale=0.25,
+        arrow_scale=0.3,
+        name="Vector Field",
+    )
+
+    nullcline_i, nullcline_r = nonlinear_model.compute_nullclines(params)
+    i_line = np.linspace(i_min, i_max, 200)
+    r_null_i = nullcline_i(i_line)
+    r_null_r = nullcline_r(i_line)
+    fig.add_trace(
+        go.Scatter(
+            x=i_line,
+            y=r_null_i,
+            mode="lines",
+            name="dI/dt = 0",
+            line=dict(color="green", width=2),
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=i_line,
+            y=r_null_r,
+            mode="lines",
+            name="dR/dt = 0",
+            line=dict(color="orange", width=2),
+        )
+    )
+
+    eq = nonlinear_model.compute_equilibrium(params)
+    fig.add_trace(
+        go.Scatter(
+            x=[eq[0]],
+            y=[eq[1]],
+            mode="markers",
+            name="Equilibrium",
+            marker=dict(symbol="star", size=12, color="black"),
+        )
+    )
+
+    if t is None:
+        t = np.linspace(0.0, 50.0, 500)
+    if y0 is None:
+        y0 = np.array(
+            [
+                params.get("initial_inventory", eq[0]),
+                params.get("initial_replenishment", eq[1]),
+            ],
+            dtype=float,
+        )
+    traj = nonlinear_model.integrate_inventory_system(y0, t, params)
+    fig.add_trace(
+        go.Scatter(
+            x=traj[:, 0],
+            y=traj[:, 1],
+            mode="lines",
+            name="Trajectory",
+            line=dict(color="purple", width=2),
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=[y0[0]],
+            y=[y0[1]],
+            mode="markers",
+            name="Start",
+            marker=dict(symbol="circle", size=8, color="purple"),
+        )
+    )
+
+    fig.update_layout(
+        title="Phase Portrait with Nullclines",
+        xaxis_title="Inventory I",
+        yaxis_title="Replenishment R",
+        template="plotly_white",
+        width=700,
+        height=600,
+    )
+    return fig
+
+
 def plot_hurst_fit(metrics: dict):
     """Log-log plot for R/S analysis."""
     import plotly.graph_objects as go
@@ -105,6 +231,39 @@ def plot_correlation_dim(metrics: dict):
         title=f"Correlation Dimension (D2={d2:.3f})",
         xaxis_title="log(r)",
         yaxis_title="log(C(r))",
+        template="plotly_white",
+    )
+    return fig
+
+
+def plot_dimension_saturation(m_values: list[int], d2_values: list[float]):
+    """Plot correlation dimension saturation vs embedding dimension."""
+    import plotly.graph_objects as go
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=m_values,
+            y=d2_values,
+            mode="lines+markers",
+            name="D2(m)",
+            line=dict(color="blue"),
+        )
+    )
+    max_m = max(m_values) if m_values else 1
+    fig.add_trace(
+        go.Scatter(
+            x=[1, max_m],
+            y=[1, max_m],
+            mode="lines",
+            name="Noise baseline y=x",
+            line=dict(color="gray", dash="dash"),
+        )
+    )
+    fig.update_layout(
+        title="Correlation Dimension Saturation",
+        xaxis_title="Embedding Dimension (m)",
+        yaxis_title="Correlation Dimension (D2)",
         template="plotly_white",
     )
     return fig
